@@ -1,0 +1,7 @@
+{
+  "name": "Kardex Agrosytem",
+  "description": "A modern, responsive logistics inventory management application (Kardex). Features real-time local state synchronization, data visualization, Excel export, and mobile-first design.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
