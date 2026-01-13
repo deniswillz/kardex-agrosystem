@@ -46,9 +46,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const mountedRef = useRef(true);
+    const initializedRef = useRef(false);
+    const loadingProfileRef = useRef(false);
 
     useEffect(() => {
         mountedRef.current = true;
+        initializedRef.current = false;
 
         const initAuth = async () => {
             try {
@@ -67,6 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 console.error('Auth init error:', err);
             } finally {
                 if (mountedRef.current) {
+                    initializedRef.current = true;
                     setLoading(false);
                 }
             }
@@ -77,10 +81,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (!mountedRef.current) return;
 
+            // Skip INITIAL_SESSION event as getSession handles it
+            if (event === 'INITIAL_SESSION') {
+                return;
+            }
+
             if (event === 'SIGNED_IN' && session?.user) {
-                await loadUserProfile(session.user.id, session.user.email || '');
+                // Only load profile if already initialized (to avoid duplicate calls)
+                if (initializedRef.current) {
+                    await loadUserProfile(session.user.id, session.user.email || '');
+                }
             } else if (event === 'SIGNED_OUT') {
                 setUser(null);
+            } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+                // Silently handle token refresh without reloading profile
+                console.log('Token refreshed');
             }
         });
 
