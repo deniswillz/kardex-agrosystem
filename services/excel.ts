@@ -21,7 +21,7 @@ export const downloadTemplate = () => {
       'Responsável': 'João'
     }
   ];
-  
+
   const worksheet = XLSX.utils.json_to_sheet(headers);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Modelo Importação");
@@ -36,8 +36,8 @@ export const exportToExcel = (transactions: Transaction[]) => {
 
   // Map data to strict columns that match our Import logic
   const dataToExport = transactions.map(t => ({
-    'ID': t.id, 
-    'Data': t.date, 
+    'ID': t.id,
+    'Data': t.date,
     'Código': t.code,
     'Item': t.name,
     'Tipo': t.type,
@@ -50,7 +50,7 @@ export const exportToExcel = (transactions: Transaction[]) => {
 
   const worksheet = XLSX.utils.json_to_sheet(dataToExport);
   const workbook = XLSX.utils.book_new();
-  
+
   const wscols = [
     { wch: 36 }, // ID
     { wch: 12 }, // Data
@@ -76,27 +76,45 @@ export const importFromExcel = async (file: File): Promise<Transaction[]> => {
     reader.onload = (e) => {
       try {
         const data = e.target?.result;
-        
+
         if (typeof XLSX === 'undefined') {
+          console.error("XLSX library not loaded");
           reject(new Error("Biblioteca XLSX não carregada. Verifique sua conexão."));
           return;
         }
 
+        console.log("📊 Iniciando leitura do arquivo Excel...");
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
-        
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        const transactions: Transaction[] = jsonData.map((row: any) => {
-          // Flexible field mapping
-          const code = row['Código'] || row['Codigo'] || row['Code'] || row['SKU'];
-          const name = row['Item'] || row['Nome'] || row['Descrição'] || row['Description'] || row['Name'];
-          const typeRaw = row['Tipo'] || row['Type'] || 'ENTRADA';
-          const qty = row['Quantidade'] || row['Qtd'] || row['Quantity'] || row['Quant'] || 0;
-          const warehouse = row['Armazém'] || row['Armazem'] || row['Warehouse'] || row['Local'] || 'Geral';
-          const date = row['Data'] || row['Date'];
-          const id = row['ID'];
+        console.log("📋 Sheet encontrada:", firstSheetName);
+
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        console.log("📝 Linhas encontradas no Excel:", jsonData.length);
+
+        if (jsonData.length > 0) {
+          console.log("🔍 Primeira linha (headers detectados):", Object.keys(jsonData[0]));
+          console.log("🔍 Dados da primeira linha:", jsonData[0]);
+        }
+
+        let skippedRows = 0;
+        let processedRows = 0;
+
+        const transactions: Transaction[] = jsonData.map((row: any, index: number) => {
+          // Flexible field mapping - check multiple possible column names
+          const code = row['Código'] || row['Codigo'] || row['Code'] || row['SKU'] || row['CÓDIGO'] || row['CODIGO'];
+          const name = row['Item'] || row['Nome'] || row['Descrição'] || row['Description'] || row['Name'] || row['ITEM'] || row['NOME'];
+          const typeRaw = row['Tipo'] || row['Type'] || row['TIPO'] || 'ENTRADA';
+          const qty = row['Quantidade'] || row['Qtd'] || row['Quantity'] || row['Quant'] || row['QUANTIDADE'] || row['QTD'] || 0;
+          const warehouse = row['Armazém'] || row['Armazem'] || row['Warehouse'] || row['Local'] || row['ARMAZÉM'] || row['ARMAZEM'] || 'Geral';
+          const date = row['Data'] || row['Date'] || row['DATA'];
+          const id = row['ID'] || row['Id'] || row['id'];
+
+          // Debug log for first few rows
+          if (index < 3) {
+            console.log(`📦 Linha ${index + 1}:`, { code, name, typeRaw, qty, warehouse, date, id });
+          }
 
           // Normalize Type
           let type: MovementType = 'ENTRADA';
@@ -109,42 +127,62 @@ export const importFromExcel = async (file: File): Promise<Transaction[]> => {
           let dateStr = new Date().toISOString().split('T')[0];
           if (date) {
             if (typeof date === 'number' && date > 20000) {
-               const dateObj = new Date((date - (25567 + 1)) * 86400 * 1000); 
-               dateStr = dateObj.toISOString().split('T')[0];
-            } else {
-               const d = new Date(date);
-               if (!isNaN(d.getTime())) {
-                 dateStr = d.toISOString().split('T')[0];
-               }
+              // Excel serial date
+              const dateObj = new Date((date - (25567 + 1)) * 86400 * 1000);
+              dateStr = dateObj.toISOString().split('T')[0];
+            } else if (typeof date === 'string') {
+              // Try to parse string date
+              const d = new Date(date);
+              if (!isNaN(d.getTime())) {
+                dateStr = d.toISOString().split('T')[0];
+              }
             }
           }
 
-          // Skip example rows or invalid rows
-          if (!code || !name || code === 'SKU-001') return null;
+          // Skip invalid rows (must have code AND name)
+          if (!code || !name) {
+            console.log(`⚠️ Linha ${index + 1} ignorada: código ou item vazio`, { code, name });
+            skippedRows++;
+            return null;
+          }
+
+          // Skip template example row
+          if (String(code).toUpperCase() === 'SKU-001') {
+            console.log(`⚠️ Linha ${index + 1} ignorada: linha de exemplo (SKU-001)`);
+            skippedRows++;
+            return null;
+          }
+
+          processedRows++;
 
           return {
-            id: (id && id !== 'DEIXE_EM_BRANCO_PARA_NOVO') ? id : crypto.randomUUID(),
+            id: (id && id !== 'DEIXE_EM_BRANCO_PARA_NOVO' && id !== '') ? String(id) : crypto.randomUUID(),
             date: dateStr,
-            code: String(code).toUpperCase(),
-            name: String(name),
+            code: String(code).toUpperCase().trim(),
+            name: String(name).trim(),
             type,
-            quantity: Number(qty),
-            warehouse: String(warehouse),
-            address: row['Endereço'] || row['Endereco'] || row['Address'] || '',
-            responsible: row['Responsável'] || row['Responsavel'] || row['Responsible'] || '',
+            quantity: Math.abs(Number(qty)) || 0,
+            warehouse: String(warehouse).trim() || 'Geral',
+            address: String(row['Endereço'] || row['Endereco'] || row['Address'] || row['ENDEREÇO'] || '').trim(),
+            responsible: String(row['Responsável'] || row['Responsavel'] || row['Responsible'] || row['RESPONSÁVEL'] || '').trim(),
             photos: [],
             timestamp: Date.now()
           };
         }).filter((t: any) => t !== null) as Transaction[];
 
+        console.log(`✅ Importação concluída: ${processedRows} registros processados, ${skippedRows} linhas ignoradas`);
+
         resolve(transactions);
       } catch (err) {
-        console.error("Erro ao importar Excel:", err);
+        console.error("❌ Erro ao importar Excel:", err);
         reject(err);
       }
     };
 
-    reader.onerror = (err) => reject(err);
+    reader.onerror = (err) => {
+      console.error("❌ Erro ao ler arquivo:", err);
+      reject(err);
+    };
     reader.readAsArrayBuffer(file);
   });
 };

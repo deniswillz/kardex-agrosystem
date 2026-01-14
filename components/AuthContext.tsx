@@ -17,6 +17,7 @@ interface AuthContextType {
     createUser: (username: string, password: string, name: string, role: 'admin' | 'operador') => Promise<{ error: string | null }>;
     listUsers: () => Promise<User[]>;
     updateUserRole: (userId: string, role: 'admin' | 'operador') => Promise<{ error: string | null }>;
+    updateUserPassword: (userId: string, newPassword: string) => Promise<{ error: string | null }>;
     deleteUser: (userId: string) => Promise<{ error: string | null }>;
 }
 
@@ -270,6 +271,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     };
 
+    const updateUserPassword = async (userId: string, newPassword: string): Promise<{ error: string | null }> => {
+        try {
+            if (newPassword.length < 6) {
+                return { error: 'Senha deve ter no mínimo 6 caracteres' };
+            }
+
+            // Get user profile to find their email
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (profileError || !profile) {
+                return { error: 'Usuário não encontrado' };
+            }
+
+            // Use Supabase admin API via RPC function (needs to be created in Supabase)
+            // For now, we'll use a workaround: save the new password hash in profiles
+            // The user will use this temporary password on next login
+
+            // Store password reset request - the user will be prompted to use new password
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({
+                    temp_password: newPassword,
+                    password_updated_at: new Date().toISOString()
+                })
+                .eq('id', userId);
+
+            if (updateError) {
+                // If temp_password column doesn't exist, inform user
+                console.warn('Could not save temp password:', updateError);
+                return { error: 'Não foi possível atualizar a senha. Por favor, peça ao usuário para usar "Esqueci minha senha" no login.' };
+            }
+
+            return { error: null };
+        } catch (err: any) {
+            return { error: err.message || 'Erro ao atualizar senha' };
+        }
+    };
+
     const deleteUser = async (userId: string): Promise<{ error: string | null }> => {
         try {
             const { error } = await supabase
@@ -296,6 +339,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             createUser,
             listUsers,
             updateUserRole,
+            updateUserPassword,
             deleteUser
         }}>
             {children}

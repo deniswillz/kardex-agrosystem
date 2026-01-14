@@ -10,7 +10,7 @@ interface UserData {
 }
 
 export const UserManagement: React.FC = () => {
-    const { user, createUser, listUsers, updateUserRole, deleteUser } = useAuth();
+    const { user, createUser, listUsers, updateUserRole, updateUserPassword, deleteUser } = useAuth();
 
     const [users, setUsers] = useState<UserData[]>([]);
     const [loading, setLoading] = useState(true);
@@ -55,11 +55,29 @@ export const UserManagement: React.FC = () => {
 
         try {
             if (editingUser) {
-                // Update role only
-                const result = await updateUserRole(editingUser.id, formRole);
-                if (result.error) {
-                    setFormError(result.error);
-                } else {
+                // Update role and optionally password
+                let hasError = false;
+
+                // Update role
+                const roleResult = await updateUserRole(editingUser.id, formRole);
+                if (roleResult.error) {
+                    setFormError(roleResult.error);
+                    hasError = true;
+                }
+
+                // Update password if provided
+                if (!hasError && formPassword && formPassword.length >= 6) {
+                    const pwResult = await updateUserPassword(editingUser.id, formPassword);
+                    if (pwResult.error) {
+                        setFormError(pwResult.error);
+                        hasError = true;
+                    }
+                } else if (formPassword && formPassword.length < 6) {
+                    setFormError('Senha deve ter no mínimo 6 caracteres');
+                    hasError = true;
+                }
+
+                if (!hasError) {
                     await loadUsers();
                     resetForm();
                 }
@@ -181,31 +199,34 @@ export const UserManagement: React.FC = () => {
                                 />
                             </div>
 
-                            {!editingUser && (
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                                        Senha *
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type={showPassword ? 'text' : 'password'}
-                                            value={formPassword}
-                                            onChange={(e) => setFormPassword(e.target.value)}
-                                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 pr-10"
-                                            placeholder="Mínimo 6 caracteres"
-                                            minLength={6}
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-                                        >
-                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                        </button>
-                                    </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                                    {editingUser ? 'Nova Senha (opcional)' : 'Senha *'}
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={formPassword}
+                                        onChange={(e) => setFormPassword(e.target.value)}
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 pr-10"
+                                        placeholder={editingUser ? 'Deixe em branco para manter' : 'Mínimo 6 caracteres'}
+                                        minLength={editingUser ? 0 : 6}
+                                        required={!editingUser}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
                                 </div>
-                            )}
+                                {editingUser && (
+                                    <p className="text-[10px] text-slate-400 mt-1">
+                                        Preencha apenas se quiser alterar a senha do usuário
+                                    </p>
+                                )}
+                            </div>
 
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
@@ -216,8 +237,8 @@ export const UserManagement: React.FC = () => {
                                         type="button"
                                         onClick={() => setFormRole('operador')}
                                         className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${formRole === 'operador'
-                                                ? 'border-primary-500 bg-primary-50 text-primary-700'
-                                                : 'border-slate-200 hover:border-slate-300'
+                                            ? 'border-primary-500 bg-primary-50 text-primary-700'
+                                            : 'border-slate-200 hover:border-slate-300'
                                             }`}
                                     >
                                         <UserCheck size={20} />
@@ -228,8 +249,8 @@ export const UserManagement: React.FC = () => {
                                         type="button"
                                         onClick={() => setFormRole('admin')}
                                         className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${formRole === 'admin'
-                                                ? 'border-amber-500 bg-amber-50 text-amber-700'
-                                                : 'border-slate-200 hover:border-slate-300'
+                                            ? 'border-amber-500 bg-amber-50 text-amber-700'
+                                            : 'border-slate-200 hover:border-slate-300'
                                             }`}
                                     >
                                         <Shield size={20} />
@@ -294,8 +315,8 @@ export const UserManagement: React.FC = () => {
                                     <td className="px-6 py-4 text-slate-700">{u.name}</td>
                                     <td className="px-6 py-4 text-center">
                                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${u.role === 'admin'
-                                                ? 'bg-amber-100 text-amber-700'
-                                                : 'bg-slate-100 text-slate-600'
+                                            ? 'bg-amber-100 text-amber-700'
+                                            : 'bg-slate-100 text-slate-600'
                                             }`}>
                                             {u.role === 'admin' ? <Shield size={12} /> : <UserCheck size={12} />}
                                             {u.role === 'admin' ? 'Admin' : 'Operador'}
