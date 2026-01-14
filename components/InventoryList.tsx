@@ -1,15 +1,20 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { Transaction } from '../types';
-import { Search, Package, ArrowRightLeft, AlertTriangle, Filter, ClipboardList } from 'lucide-react';
+import { Search, Package, ArrowRightLeft, AlertTriangle, Filter, ClipboardList, Upload, Download, Loader2, FileSpreadsheet } from 'lucide-react';
+import { downloadInventoryTemplate, importInventoryFromExcel, InventoryImportItem } from '../services/excel';
 
 interface InventoryListProps {
   transactions: Transaction[];
   onSelectCode: (code: string) => void;
+  onImportInventory?: (items: InventoryImportItem[]) => Promise<void>;
 }
 
-export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSelectCode }) => {
+export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSelectCode, onImportInventory }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'OK' | 'CRITICAL' | 'NEGATIVE'>('ALL');
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ count: number; message: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Aggregate items with min_stock info
   const inventory = useMemo(() => {
@@ -105,9 +110,61 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
     return { text: 'OK', bg: 'bg-emerald-100', color: 'text-emerald-700', icon: false };
   };
 
+  // Handle file import
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setImportResult(null);
+
+    try {
+      const items = await importInventoryFromExcel(file);
+
+      if (items.length === 0) {
+        setImportResult({ count: 0, message: 'Nenhum item válido encontrado no arquivo.' });
+        setIsImporting(false);
+        return;
+      }
+
+      if (onImportInventory) {
+        await onImportInventory(items);
+        setImportResult({
+          count: items.length,
+          message: `${items.length} itens importados com sucesso!`
+        });
+      } else {
+        setImportResult({
+          count: items.length,
+          message: `${items.length} itens encontrados. Configure o handler de importação.`
+        });
+      }
+    } catch (error) {
+      console.error('Erro na importação:', error);
+      setImportResult({ count: 0, message: 'Erro ao importar arquivo. Verifique o formato.' });
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
       <div className="p-4 border-b border-slate-100 space-y-3">
+        {/* Import Result Notification */}
+        {importResult && (
+          <div className={`p-3 rounded-lg flex items-center justify-between ${importResult.count > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+            }`}>
+            <span className="text-sm font-medium">{importResult.message}</span>
+            <button
+              onClick={() => setImportResult(null)}
+              className="text-current opacity-60 hover:opacity-100"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Header row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -122,15 +179,50 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
             )}
           </h2>
 
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <div className="flex items-center gap-2">
+            {/* Import Button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isImporting}
+              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors disabled:opacity-50"
+            >
+              {isImporting ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Upload size={16} />
+              )}
+              <span className="hidden sm:inline">Importar Excel</span>
+            </button>
+
+            {/* Download Template */}
+            <button
+              onClick={downloadInventoryTemplate}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+            >
+              <FileSpreadsheet size={16} />
+              <span className="hidden sm:inline">Modelo</span>
+            </button>
+
+            {/* Hidden file input */}
             <input
-              type="text"
-              placeholder="Buscar item ou código..."
-              className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-full"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileImport}
+              accept=".xlsx, .xls"
+              className="hidden"
             />
+
+            {/* Search */}
+            <div className="relative w-full sm:w-48">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
         </div>
 

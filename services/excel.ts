@@ -3,6 +3,15 @@ import { Transaction, MovementType } from '../types';
 // Declare XLSX global from CDN
 declare const XLSX: any;
 
+export interface InventoryImportItem {
+  code: string;
+  name: string;
+  quantity: number;
+  warehouse: string;
+  address?: string;
+  min_stock?: number;
+}
+
 export const downloadTemplate = () => {
   if (typeof XLSX === 'undefined') {
     alert("Erro: Biblioteca XLSX não carregada.");
@@ -173,6 +182,138 @@ export const importFromExcel = async (file: File): Promise<Transaction[]> => {
         console.log(`✅ Importação concluída: ${processedRows} registros processados, ${skippedRows} linhas ignoradas`);
 
         resolve(transactions);
+      } catch (err) {
+        console.error("❌ Erro ao importar Excel:", err);
+        reject(err);
+      }
+    };
+
+    reader.onerror = (err) => {
+      console.error("❌ Erro ao ler arquivo:", err);
+      reject(err);
+    };
+    reader.readAsArrayBuffer(file);
+  });
+};
+
+// Download template for inventory import
+export const downloadInventoryTemplate = () => {
+  if (typeof XLSX === 'undefined') {
+    alert("Erro: Biblioteca XLSX não carregada.");
+    return;
+  }
+
+  const exampleData = [
+    {
+      'Código': 'PROD-001',
+      'Item': 'Produto Exemplo 1',
+      'Quantidade': 100,
+      'Armazém': 'Geral',
+      'Endereço': 'A1-01',
+      'Estoque Mínimo': 10
+    },
+    {
+      'Código': 'PROD-002',
+      'Item': 'Produto Exemplo 2',
+      'Quantidade': 50,
+      'Armazém': 'Secundário',
+      'Endereço': 'B2-05',
+      'Estoque Mínimo': 5
+    }
+  ];
+
+  const worksheet = XLSX.utils.json_to_sheet(exampleData);
+  const workbook = XLSX.utils.book_new();
+
+  // Column widths
+  worksheet['!cols'] = [
+    { wch: 15 }, // Código
+    { wch: 30 }, // Item
+    { wch: 12 }, // Quantidade
+    { wch: 15 }, // Armazém
+    { wch: 12 }, // Endereço
+    { wch: 15 }  // Estoque Mínimo
+  ];
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Lista de Estoque");
+  XLSX.writeFile(workbook, "Modelo_Lista_Estoque.xlsx");
+};
+
+// Import inventory items from Excel
+export const importInventoryFromExcel = async (file: File): Promise<InventoryImportItem[]> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+
+        if (typeof XLSX === 'undefined') {
+          console.error("XLSX library not loaded");
+          reject(new Error("Biblioteca XLSX não carregada."));
+          return;
+        }
+
+        console.log("📊 Iniciando importação de lista de estoque...");
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+
+        console.log("📋 Sheet encontrada:", firstSheetName);
+
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        console.log("📝 Linhas encontradas:", jsonData.length);
+
+        if (jsonData.length > 0) {
+          console.log("🔍 Colunas detectadas:", Object.keys(jsonData[0]));
+        }
+
+        let skippedRows = 0;
+        let processedRows = 0;
+
+        const items: InventoryImportItem[] = jsonData.map((row: any, index: number) => {
+          // Flexible field mapping
+          const code = row['Código'] || row['Codigo'] || row['Code'] || row['SKU'] || row['CÓDIGO'] || row['CODIGO'];
+          const name = row['Item'] || row['Nome'] || row['Descrição'] || row['Description'] || row['Name'] || row['ITEM'] || row['NOME'] || row['Produto'] || row['PRODUTO'];
+          const qty = row['Quantidade'] || row['Qtd'] || row['Quantity'] || row['Quant'] || row['QUANTIDADE'] || row['QTD'] || row['Saldo'] || row['SALDO'] || 0;
+          const warehouse = row['Armazém'] || row['Armazem'] || row['Warehouse'] || row['Local'] || row['ARMAZÉM'] || row['ARMAZEM'] || 'Geral';
+          const address = row['Endereço'] || row['Endereco'] || row['Address'] || row['ENDEREÇO'] || row['Localização'] || '';
+          const minStock = row['Estoque Mínimo'] || row['Estoque Minimo'] || row['Min Stock'] || row['Min'] || row['ESTOQUE MÍNIMO'] || row['Mínimo'] || 0;
+
+          // Debug log for first few rows
+          if (index < 3) {
+            console.log(`📦 Linha ${index + 1}:`, { code, name, qty, warehouse, address, minStock });
+          }
+
+          // Skip invalid rows (must have code AND name)
+          if (!code || !name) {
+            console.log(`⚠️ Linha ${index + 1} ignorada: código ou item vazio`, { code, name });
+            skippedRows++;
+            return null;
+          }
+
+          // Skip example rows
+          if (String(code).toUpperCase().startsWith('PROD-00')) {
+            console.log(`⚠️ Linha ${index + 1} ignorada: linha de exemplo`);
+            skippedRows++;
+            return null;
+          }
+
+          processedRows++;
+
+          return {
+            code: String(code).toUpperCase().trim(),
+            name: String(name).trim(),
+            quantity: Math.abs(Number(qty)) || 0,
+            warehouse: String(warehouse).trim() || 'Geral',
+            address: String(address).trim() || undefined,
+            min_stock: Math.abs(Number(minStock)) || undefined
+          };
+        }).filter((item): item is InventoryImportItem => item !== null);
+
+        console.log(`✅ Importação concluída: ${processedRows} itens processados, ${skippedRows} linhas ignoradas`);
+
+        resolve(items);
       } catch (err) {
         console.error("❌ Erro ao importar Excel:", err);
         reject(err);

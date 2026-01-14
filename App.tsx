@@ -10,7 +10,7 @@ import {
   migrateLocalToSupabase,
   exportToJson
 } from './services/storage';
-import { exportToExcel, importFromExcel, downloadTemplate } from './services/excel';
+import { exportToExcel, importFromExcel, downloadTemplate, InventoryImportItem } from './services/excel';
 import { StatsCards } from './components/StatsCards';
 import { Dashboard } from './components/Dashboard';
 import { MovementForm } from './components/MovementForm';
@@ -209,6 +209,37 @@ function AppContent() {
     setEditingTransaction(null);
     setPresetCode(code);
     setView('FORM');
+  };
+
+  // Handle inventory import from Excel
+  const handleInventoryImport = async (items: InventoryImportItem[]) => {
+    setSyncStatus('SYNCING');
+    const today = new Date().toISOString().split('T')[0];
+
+    for (const item of items) {
+      // Create ENTRADA transaction for each item with initial stock
+      if (item.quantity > 0) {
+        const txData = {
+          date: today,
+          code: item.code,
+          name: item.name,
+          type: 'ENTRADA' as const,
+          quantity: item.quantity,
+          warehouse: item.warehouse,
+          address: item.address || '',
+          responsible: user?.name || '',
+          photos: [],
+          min_stock: item.min_stock
+        };
+
+        const saved = await saveTransaction(txData, user?.id);
+        if (saved) {
+          setTransactions(prev => [saved, ...prev]);
+        }
+      }
+    }
+
+    setSyncStatus('SYNCED');
   };
 
   const handleImportClick = () => {
@@ -495,7 +526,11 @@ function AppContent() {
 
             {view === 'INVENTORY' && (
               <div className="flex-1 min-h-0">
-                <InventoryList transactions={transactions} onSelectCode={handleSelectInventoryItem} />
+                <InventoryList
+                  transactions={transactions}
+                  onSelectCode={handleSelectInventoryItem}
+                  onImportInventory={handleInventoryImport}
+                />
               </div>
             )}
 
