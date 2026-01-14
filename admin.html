@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração | Diário de Bordo - Agrosystem</title>
+    <meta name="description" content="Área administrativa para gerenciamento de usuários">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Admin Page Specific Styles */
+        .admin-container {
+            min-height: 100vh;
+            background: var(--gray-50);
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow);
+        }
+
+        .admin-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .admin-logo {
+            height: 40px;
+        }
+
+        .admin-header h1 {
+            color: var(--white);
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .admin-header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: var(--radius);
+            color: var(--white);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .admin-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .admin-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .admin-card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .admin-card-header h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin: 0;
+        }
+
+        .admin-card-body {
+            padding: 24px;
+        }
+
+        .user-form .form-group {
+            margin-bottom: 16px;
+        }
+
+        .user-form label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 6px;
+        }
+
+        .user-form input,
+        .user-form select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .user-form input:focus,
+        .user-form select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(1, 126, 85, 0.1);
+        }
+
+        .user-form .btn-create {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-form .btn-create:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .users-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-100);
+            transition: var(--transition);
+        }
+
+        .user-item:hover {
+            background: var(--gray-50);
+        }
+
+        .user-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .user-details h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin: 0 0 4px 0;
+        }
+
+        .user-details p {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            margin: 0;
+        }
+
+        .user-role {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .user-role.admin {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .user-role.operador {
+            background: var(--info-light);
+            color: var(--info);
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon-small {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--gray-200);
+            background: var(--white);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-icon-small:hover {
+            background: var(--gray-100);
+        }
+
+        .btn-icon-small.delete:hover {
+            background: var(--danger-light);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .empty-users {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-400);
+        }
+
+        .empty-users svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 24px;
+            background: var(--gray-800);
+            color: var(--white);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        .not-admin-message {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .not-admin-message svg {
+            width: 80px;
+            height: 80px;
+            color: var(--danger);
+            margin-bottom: 20px;
+        }
+
+        .not-admin-message h2 {
+            font-size: 1.5rem;
+            color: var(--gray-800);
+            margin-bottom: 12px;
+        }
+
+        .not-admin-message p {
+            color: var(--gray-500);
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <div class="admin-header-left">
+                <img src="https://static.wixstatic.com/media/4f1b82_35d422e5326947908f32849f5e4d3fef~mv2.png/v1/crop/x_8,y_0,w_1150,h_345/fill/w_204,h_52,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Marca_Agrosystem_marca_principal_branco.png"
+                    alt="Agrosystem" class="admin-logo">
+                <h1>👤 Administração de Usuários</h1>
+            </div>
+            <div class="admin-header-right">
+                <a href="index.html" class="btn-back">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Voltar ao Sistema
+                </a>
+            </div>
+        </header>
+
+        <main class="admin-content" id="adminContent">
+            <!-- Content will be loaded dynamically -->
+        </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script>
+        const adminContent = document.getElementById('adminContent');
+        const toast = document.getElementById('toast');
+
+        function showToastMessage(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        async function init() {
+            // Check auth
+            const user = await getCurrentUser();
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Check if admin
+            const admin = await isAdmin();
+            if (!admin) {
+                adminContent.innerHTML = `
+                    <div class="admin-card">
+                        <div class="not-admin-message">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="15" y1="9" x2="9" y2="15"></line>
+                                <line x1="9" y1="9" x2="15" y2="15"></line>
+                            </svg>
+                            <h2>Acesso Restrito</h2>
+                            <p>Você não tem permissão para acessar esta área. Somente administradores podem gerenciar usuários.</p>
+                            <a href="index.html" class="btn btn-primary">Voltar ao Sistema</a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render admin interface
+            renderAdminInterface();
+        }
+
+        async function renderAdminInterface() {
+            adminContent.innerHTML = `
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h2>➕ Criar Novo Usuário</h2>
+                        </div>
+                        <div class="admin-card-body">
+                            <form class="user-form" id="createUserForm">
+                                <div class="form-group">
+                                    <label for="userName">Nome de Usuário</label>
+                                    <input type="text" id="userName" placeholder="Ex: joao.silva" required pattern="[a-zA-Z0-9._]+" title="Use apenas letras, números, pontos e underscores">
+                                </div>
+                                <div class="form-group">
+                                    <label for="userPassword">Senha</label>
+                                    <input type="password" id="userPassword" placeholder="Mínimo 6 caracteres" minlength="6" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="userRole">Perfil</label>
+                                    <select id="userRole" required>
+                                        <option value="operador">Operador</option>
+                                        <option value="admin">Administrador</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn-create">Criar Usuário</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h2>👥 Usuários Cadastrados</h2>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="users-list" id="usersList">
+                                <!-- Users will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Load users
+            await loadUsers();
+
+            // Setup form handler
+            document.getElementById('createUserForm').addEventListener('submit', handleCreateUser);
+        }
+
+        async function loadUsers() {
+            const usersList = document.getElementById('usersList');
+
+            try {
+                const users = await getAllUsers();
+
+                if (users.length === 0) {
+                    usersList.innerHTML = `
+                        <div class="empty-users">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <p>Nenhum usuário cadastrado</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                usersList.innerHTML = users.map(user => `
+                    <div class="user-item">
+                        <div class="user-info">
+                            <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
+                            <div class="user-details">
+                                <h3>${user.name}</h3>
+                                <p>@${user.username || user.name.toLowerCase().replace(/\s+/g, '_')}</p>
+                            </div>
+                        </div>
+                        <span class="user-role ${user.role}">${user.role}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading users:', error);
+                usersList.innerHTML = '<p class="empty-users">Erro ao carregar usuários</p>';
+            }
+        }
+
+        async function handleCreateUser(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('userName').value.trim();
+            const password = document.getElementById('userPassword').value;
+            const role = document.getElementById('userRole').value;
+
+            try {
+                await signUpWithUsername(username, password, role);
+                showToastMessage('Usuário criado com sucesso!');
+                document.getElementById('createUserForm').reset();
+                await loadUsers();
+            } catch (error) {
+                console.error('Error creating user:', error);
+                showToastMessage(error.message || 'Erro ao criar usuário', 'error');
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+
+</html>

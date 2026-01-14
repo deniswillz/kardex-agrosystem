@@ -2,68 +2,645 @@
 <html lang="pt-BR">
 
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Kardex Pro Logistics</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
-          colors: {
-            primary: {
-              50: '#ecfdf5',
-              100: '#d1fae5',
-              500: '#10b981',
-              600: '#059669',
-              700: '#047857',
-              800: '#065f46',
-              900: '#064e3b',
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-
-    /* Hide scrollbar for IE, Edge and Firefox */
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      /* IE and Edge */
-      scrollbar-width: none;
-      /* Firefox */
-    }
-  </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
-    "react-dom": "https://esm.sh/react-dom@^19.2.3",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "recharts": "https://esm.sh/recharts@^3.6.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-  }
-}
-</script>
-  <link rel="stylesheet" href="/index.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diário de Bordo | Agrosystem</title>
+    <meta name="description" content="Sistema de controle de entrada e saída de Notas Fiscais e Ordens de Produção">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
 
-<body class="bg-gray-50 text-slate-800 antialiased">
-  <div id="root"></div>
-  <script type="module" src="./index.tsx"></script>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <img src="https://static.wixstatic.com/media/4f1b82_35d422e5326947908f32849f5e4d3fef~mv2.png/v1/crop/x_8,y_0,w_1150,h_345/fill/w_204,h_52,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Marca_Agrosystem_marca_principal_branco.png"
+                alt="Agrosystem" class="logo">
+        </div>
+        <div class="header-center">
+            <h1>Diário de Bordo</h1>
+        </div>
+        <div class="header-right">
+            <div class="alert-badge" id="alertBadge" title="Alertas pendentes">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span class="badge-count" id="badgeCount">0</span>
+            </div>
+            <div class="user-info-header" id="userInfoHeader" style="display: none;">
+                <span class="user-name" id="userName"></span>
+                <a href="admin.html" class="btn-admin" id="adminLink" style="display: none;" title="Administração">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </a>
+                <button class="btn-logout" id="logoutBtn" title="Sair">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="current-date" id="currentDate"></div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <nav class="sidebar-nav">
+            <button class="nav-item active" data-section="dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>Dashboard</span>
+            </button>
+            <button class="nav-item" data-section="notas">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                <span>Notas Fiscais</span>
+            </button>
+            <button class="nav-item" data-section="ordens">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Ordens de Produção</span>
+            </button>
+            <button class="nav-item" data-section="comentarios">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Comentários</span>
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Dashboard Section -->
+        <section class="section active" id="dashboard">
+            <div class="section-header">
+                <h2>Dashboard</h2>
+                <p class="section-subtitle">Visão geral do sistema</p>
+            </div>
+
+            <!-- Alert Panel -->
+            <div class="alert-panel" id="alertPanel">
+                <div class="alert-panel-header">
+                    <h3>🔔 Alertas de Pendências</h3>
+                    <span class="alert-info">Itens pendentes há 3+ dias</span>
+                </div>
+                <div class="alert-list" id="alertList">
+                    <!-- Alerts will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon notas">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalNotas">0</span>
+                        <span class="stat-label">Notas Fiscais</span>
+                    </div>
+                    <div class="stat-details">
+                        <span class="pending" id="notasPendentes">0 pendentes</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon ordens">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalOrdens">0</span>
+                        <span class="stat-label">Ordens de Produção</span>
+                    </div>
+                    <div class="stat-details">
+                        <span class="pending" id="ordensPendentes">0 em separação</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon comentarios">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalComentarios">0</span>
+                        <span class="stat-label">Comentários</span>
+                    </div>
+                    <div class="stat-details">
+                        <span id="comentariosHoje">0 hoje</span>
+                    </div>
+                </div>
+
+                <div class="stat-card alert-card">
+                    <div class="stat-icon alertas">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                            </path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalAlertas">0</span>
+                        <span class="stat-label">Alertas Críticos</span>
+                    </div>
+                    <div class="stat-details">
+                        <span class="critical" id="alertasInfo">Pendentes há 3+ dias</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar -->
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button class="calendar-nav" id="prevMonth">&lt;</button>
+                    <h3 class="calendar-title" id="calendarTitle">Janeiro 2026</h3>
+                    <button class="calendar-nav" id="nextMonth">&gt;</button>
+                </div>
+                <div class="calendar-grid">
+                    <div class="calendar-weekdays">
+                        <span>Dom</span>
+                        <span>Seg</span>
+                        <span>Ter</span>
+                        <span>Qua</span>
+                        <span>Qui</span>
+                        <span>Sex</span>
+                        <span>Sáb</span>
+                    </div>
+                    <div class="calendar-days" id="calendarDays">
+                        <!-- Days will be rendered here -->
+                    </div>
+                </div>
+                <div class="calendar-legend">
+                    <span class="legend-item"><span class="legend-color pending"></span> Pendências</span>
+                    <span class="legend-item"><span class="legend-color complete"></span> Concluído</span>
+                    <span class="legend-item"><span class="legend-color comment"></span> Comentário</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Notas Fiscais Section -->
+        <section class="section" id="notas">
+            <div class="section-header">
+                <h2>Notas Fiscais</h2>
+                <p class="section-subtitle">Gerenciamento de notas fiscais de entrada e saída</p>
+            </div>
+
+            <div class="content-layout">
+                <!-- Form -->
+                <div class="form-card">
+                    <h3 class="form-title" id="notaFormTitle">Nova Nota Fiscal</h3>
+                    <form id="notaForm">
+                        <input type="hidden" id="notaId">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="notaData">Data</label>
+                                <input type="date" id="notaData" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="notaNumero">Nº Nota *</label>
+                                <input type="text" id="notaNumero" placeholder="Ex: 12345" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="notaFornecedor">Fornecedor</label>
+                            <input type="text" id="notaFornecedor" placeholder="Nome do fornecedor">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="notaStatus">Status *</label>
+                                <select id="notaStatus" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="Pendente">Pendente</option>
+                                    <option value="Em Conferência">Em Conferência</option>
+                                    <option value="Pré Nota">Pré Nota</option>
+                                    <option value="Classificada">Classificada</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="notaTipo">Tipo</label>
+                                <select id="notaTipo">
+                                    <option value="">Selecione...</option>
+                                    <option value="Entrada">Entrada</option>
+                                    <option value="Saída">Saída</option>
+                                    <option value="Devolução">Devolução</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="notaObs">Observação</label>
+                            <textarea id="notaObs" rows="3" placeholder="Observações adicionais..."></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="notaCancelar">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" id="notaSalvar">Salvar Nota</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- List -->
+                <div class="list-card">
+                    <div class="list-header">
+                        <h3>Lista de Notas</h3>
+                        <div class="list-filters">
+                            <input type="text" class="search-input" id="notaSearch" placeholder="Buscar...">
+                            <select id="notaFilterStatus" class="filter-select">
+                                <option value="">Todos os Status</option>
+                                <option value="Pendente">Pendente</option>
+                                <option value="Em Conferência">Em Conferência</option>
+                                <option value="Pré Nota">Pré Nota</option>
+                                <option value="Classificada">Classificada</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="list-content" id="notasList">
+                        <!-- Items will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ordens de Produção Section -->
+        <section class="section" id="ordens">
+            <div class="section-header">
+                <h2>Ordens de Produção</h2>
+                <p class="section-subtitle">Gerenciamento de ordens de produção</p>
+            </div>
+
+            <div class="content-layout">
+                <!-- Form -->
+                <div class="form-card">
+                    <h3 class="form-title" id="ordemFormTitle">Nova Ordem de Produção</h3>
+                    <form id="ordemForm">
+                        <input type="hidden" id="ordemId">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ordemData">Data</label>
+                                <input type="date" id="ordemData" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ordemNumero">Nº Ordem *</label>
+                                <input type="text" id="ordemNumero" placeholder="Ex: OP-001" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ordemDocumento">Documento</label>
+                                <input type="text" id="ordemDocumento" placeholder="Nº do documento">
+                            </div>
+                            <div class="form-group">
+                                <label for="ordemStatus">Status *</label>
+                                <select id="ordemStatus" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="Em Separação">Em Separação</option>
+                                    <option value="Concluída">Concluída</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="ordemObs">Observação</label>
+                            <textarea id="ordemObs" rows="3" placeholder="Observações adicionais..."></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="ordemCancelar">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" id="ordemSalvar">Salvar Ordem</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- List -->
+                <div class="list-card">
+                    <div class="list-header">
+                        <h3>Lista de Ordens</h3>
+                        <div class="list-filters">
+                            <input type="text" class="search-input" id="ordemSearch" placeholder="Buscar...">
+                            <select id="ordemFilterStatus" class="filter-select">
+                                <option value="">Todos os Status</option>
+                                <option value="Em Separação">Em Separação</option>
+                                <option value="Concluída">Concluída</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="list-content" id="ordensList">
+                        <!-- Items will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comentários Section -->
+        <section class="section" id="comentarios">
+            <div class="section-header">
+                <h2>Comentários</h2>
+                <p class="section-subtitle">Anotações e observações diárias</p>
+            </div>
+
+            <div class="content-layout">
+                <!-- Form -->
+                <div class="form-card">
+                    <h3 class="form-title" id="comentarioFormTitle">Novo Comentário</h3>
+                    <form id="comentarioForm">
+                        <input type="hidden" id="comentarioId">
+                        <div class="form-group">
+                            <label for="comentarioData">Data</label>
+                            <input type="date" id="comentarioData" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="comentarioTexto">Comentário *</label>
+                            <textarea id="comentarioTexto" rows="5" placeholder="Digite seu comentário..."
+                                required></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="comentarioCancelar">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" id="comentarioSalvar">Salvar
+                                Comentário</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- List -->
+                <div class="list-card">
+                    <div class="list-header">
+                        <h3>Lista de Comentários</h3>
+                        <div class="list-filters">
+                            <input type="text" class="search-input" id="comentarioSearch" placeholder="Buscar...">
+                        </div>
+                    </div>
+                    <div class="list-content" id="comentariosList">
+                        <!-- Items will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span class="toast-message" id="toastMessage"></span>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <h3>Confirmar Exclusão</h3>
+            <p>Deseja realmente excluir este item? Esta ação não pode ser desfeita.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelDelete">Cancelar</button>
+                <button class="btn btn-danger" id="confirmDelete">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Day Popup Modal -->
+    <div class="modal" id="dayPopupModal">
+        <div class="modal-content day-popup-content">
+            <div class="day-popup-header">
+                <h3 id="dayPopupTitle">📅 Detalhes do Dia</h3>
+                <button class="btn-icon close-popup" id="closeDayPopup" title="Fechar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Day Summary -->
+            <div class="day-popup-summary" id="dayPopupSummary">
+                <div class="summary-item notas">
+                    <span class="summary-count" id="popupNotasCount">0</span>
+                    <span class="summary-label">Notas</span>
+                </div>
+                <div class="summary-item ordens">
+                    <span class="summary-count" id="popupOrdensCount">0</span>
+                    <span class="summary-label">Ordens</span>
+                </div>
+                <div class="summary-item comentarios">
+                    <span class="summary-count" id="popupComentariosCount">0</span>
+                    <span class="summary-label">Comentários</span>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="day-popup-tabs">
+                <button class="popup-tab active" data-tab="notas">📄 Notas</button>
+                <button class="popup-tab" data-tab="ordens">⏱️ Ordens</button>
+                <button class="popup-tab" data-tab="comentarios">💬 Comentários</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="day-popup-body">
+                <div class="popup-tab-content active" id="popupNotasContent">
+                    <!-- Notas list will be rendered here -->
+                </div>
+                <div class="popup-tab-content" id="popupOrdensContent">
+                    <!-- Ordens list will be rendered here -->
+                </div>
+                <div class="popup-tab-content" id="popupComentariosContent">
+                    <!-- Comentarios list will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Quick Observation -->
+            <div class="day-popup-footer">
+                <div class="quick-obs-form">
+                    <input type="text" id="quickObsInput" placeholder="Adicionar observação rápida...">
+                    <button class="btn btn-primary" id="addQuickObs">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Auth and user initialization - SUPPORTS GUEST MODE
+        (async function () {
+            // Get elements
+            const userInfoHeader = document.getElementById('userInfoHeader');
+            const userNameEl = document.getElementById('userName');
+            const adminLink = document.getElementById('adminLink');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            // Check if guest mode
+            const isGuestMode = localStorage.getItem('diario_guest_mode') === 'true';
+
+            if (isGuestMode) {
+                // GUEST MODE - Read only
+                console.log('Guest mode active');
+                window.userRole = 'guest';
+                window.isAdmin = false;
+                window.isGuest = true;
+
+                // Show guest indicator
+                userInfoHeader.style.display = 'flex';
+                userNameEl.textContent = '👁️ Visitante';
+                userNameEl.style.color = '#6b7280';
+
+                // Change logout button to login button
+                logoutBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                `;
+                logoutBtn.title = 'Fazer Login';
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.removeItem('diario_guest_mode');
+                    window.location.href = 'login.html';
+                });
+
+                // Hide all editing for guests
+                hideEditingForOperators();
+                return;
+            }
+
+            // Check auth for logged users
+            try {
+                const profile = await getCurrentProfile();
+
+                // If no profile and not guest, redirect to login
+                if (!profile) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // User is logged in
+                window.isGuest = false;
+                userInfoHeader.style.display = 'flex';
+                userNameEl.textContent = profile.name;
+
+                // Store user role globally for permission checks
+                window.userRole = profile.role;
+                window.isAdmin = profile.role === 'admin';
+
+                if (profile.role === 'admin') {
+                    adminLink.style.display = 'flex';
+                } else {
+                    // OPERATOR: Hide all edit forms and action buttons
+                    hideEditingForOperators();
+                }
+
+                logoutBtn.addEventListener('click', async () => {
+                    await signOut();
+                });
+
+                // Try migration once (if there's local data)
+                const migrated = localStorage.getItem('diario_migrated');
+                if (!migrated) {
+                    try {
+                        await migrateDataToSupabase();
+                        localStorage.setItem('diario_migrated', 'true');
+                    } catch (e) {
+                        console.log('Migration skipped or already done');
+                    }
+                }
+            } catch (error) {
+                console.log('Auth error, redirecting to login');
+                window.location.href = 'login.html';
+            }
+        })();
+
+        // Function to hide editing capabilities for operators
+        function hideEditingForOperators() {
+            // Hide all form cards
+            document.querySelectorAll('.form-card').forEach(card => {
+                card.style.display = 'none';
+            });
+
+            // Hide delete and edit buttons in lists
+            document.querySelectorAll('.list-item-actions').forEach(actions => {
+                actions.style.display = 'none';
+            });
+
+            // Hide quick observation form in popup
+            const popupFooter = document.querySelector('.day-popup-footer');
+            if (popupFooter) {
+                popupFooter.style.display = 'none';
+            }
+
+            // Add observer to hide buttons in dynamically rendered lists
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.addedNodes.length) {
+                        document.querySelectorAll('.list-item-actions').forEach(actions => {
+                            actions.style.display = 'none';
+                        });
+                    }
+                });
+            });
+
+            // Observe changes in list containers
+            const notasList = document.getElementById('notasList');
+            const ordensList = document.getElementById('ordensList');
+            const comentariosList = document.getElementById('comentariosList');
+
+            if (notasList) observer.observe(notasList, { childList: true });
+            if (ordensList) observer.observe(ordensList, { childList: true });
+            if (comentariosList) observer.observe(comentariosList, { childList: true });
+
+            // Show read-only message
+            const sections = document.querySelectorAll('.section-subtitle');
+            sections.forEach(subtitle => {
+                subtitle.innerHTML += ' <span style="color: var(--warning); font-weight: 600;">(Somente Visualização)</span>';
+            });
+        }
+    </script>
 </body>
 
 </html>
