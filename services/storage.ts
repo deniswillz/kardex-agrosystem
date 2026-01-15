@@ -278,3 +278,25 @@ export const exportToJson = (transactions: Transaction[]) => {
   link.click();
   document.body.removeChild(link);
 };
+// Clear all data (ADMIN only)
+export const clearAllData = async (): Promise<boolean> => {
+  try {
+    // 1. Delete all transactions
+    // Since Supabase requires a filter for DELETE, we use a filter that matches everything
+    const { error: txError } = await supabase
+      .from('transactions')
+      .delete()
+      .not('id', 'is', null);
+
+    if (txError) throw txError;
+
+    // 2. Clear localStorage
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(MIGRATION_KEY);
+
+    return true;
+  } catch (error) {
+    console.error("Failed to clear all data", error);
+    return false;
+  }
+};

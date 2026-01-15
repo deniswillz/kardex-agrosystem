@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, Plus, Pencil, Trash2, Shield, UserCheck, Loader2, X, Save, Eye, EyeOff } from 'lucide-react';
+import { User, Plus, Pencil, Trash2, Shield, UserCheck, Loader2, X, Save, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { useAuth } from './AuthContext';
+import { clearAllData } from '../services/storage';
 
 interface UserData {
     id: string;
@@ -133,6 +134,28 @@ export const UserManagement: React.FC = () => {
         }
     };
 
+    const handleResetData = async () => {
+        const confirm1 = window.confirm("PERIGO: Esta ação apagará TODO o histórico de movimentações e o estoque atual.\n\nEssa ação é irreversível.\n\nDeseja continuar?");
+        if (!confirm1) return;
+
+        const confirm2 = window.prompt("Para confirmar a exclusão completa, digite 'DELETAR' no campo abaixo:");
+        if (confirm2 !== 'DELETAR') {
+            alert("Ação cancelada.");
+            return;
+        }
+
+        setLoading(true);
+        const success = await clearAllData();
+        setLoading(false);
+
+        if (success) {
+            alert("O sistema foi resetado com sucesso.");
+            window.location.reload();
+        } else {
+            alert("Erro ao tentar limpar os dados. Verifique a conexão.");
+        }
+    };
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
             <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -144,12 +167,21 @@ export const UserManagement: React.FC = () => {
                     </span>
                 </h2>
 
-                <button
-                    onClick={() => { resetForm(); setShowForm(true); }}
-                    className="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-primary-700 transition-colors"
-                >
-                    <Plus size={18} /> Novo Usuário
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleResetData}
+                        className="bg-red-100 text-red-700 px-3 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-red-200 transition-colors text-sm"
+                        title="Apagar todos os dados do sistema"
+                    >
+                        <AlertTriangle size={16} /> Resetar Dados
+                    </button>
+                    <button
+                        onClick={() => { resetForm(); setShowForm(true); }}
+                        className="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-primary-700 transition-colors"
+                    >
+                        <Plus size={18} /> Novo Usuário
+                    </button>
+                </div>
             </div>
 
             {/* Form Modal */}
