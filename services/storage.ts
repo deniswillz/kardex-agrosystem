@@ -33,7 +33,8 @@ export const loadTransactions = async (): Promise<Transaction[]> => {
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(10000);
 
     if (error) {
       console.error('Supabase load error:', error);

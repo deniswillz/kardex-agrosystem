@@ -253,6 +253,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
               <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">Saídas</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Saldo</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider hidden sm:table-cell">Contagens</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider hidden sm:table-cell">Mínimo</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Ação</th>
             </tr>
           </thead>
@@ -279,17 +280,10 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
                     -{item.exits}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <div className="flex flex-col items-end gap-1">
-                      <span className={`px-2 py-1 inline-flex text-sm leading-5 font-bold rounded-full ${status.bg} ${status.color}`}>
-                        {item.balance} un
-                        {status.icon && <AlertTriangle size={14} className="ml-1" />}
-                      </span>
-                      {item.min_stock > 0 && (
-                        <span className="text-[10px] text-slate-400">
-                          mín: {item.min_stock}
-                        </span>
-                      )}
-                    </div>
+                    <span className={`px-2 py-1 inline-flex text-sm leading-5 font-bold rounded-full ${status.bg} ${status.color}`}>
+                      {item.balance} un
+                      {status.icon && <AlertTriangle size={14} className="ml-1" />}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center hidden sm:table-cell">
                     {item.contagens > 0 ? (
@@ -305,6 +299,13 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
                       </div>
                     ) : (
                       <span className="text-xs text-slate-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm hidden sm:table-cell">
+                    {item.min_stock > 0 ? (
+                      <span className="text-amber-600 font-medium">{item.min_stock}</span>
+                    ) : (
+                      <span className="text-slate-400">-</span>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

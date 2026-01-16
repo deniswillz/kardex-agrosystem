@@ -216,6 +216,19 @@ export const MovementForm: React.FC<MovementFormProps> = ({
 
     const isContagem = categoryId === 2;
 
+    // Validate exit quantity against current stock
+    if (!isContagem && type === 'SAIDA' && currentStock !== null) {
+      const exitQty = Number(quantity);
+      const availableStock = initialData && initialData.type === 'SAIDA'
+        ? currentStock + initialData.quantity
+        : currentStock;
+
+      if (exitQty > availableStock) {
+        alert(`ATENÇÃO: Saldo insuficiente!\n\nSaldo atual: ${availableStock} un\nQuantidade solicitada: ${exitQty} un\n\nA movimentação não pode ser realizada.`);
+        return;
+      }
+    }
+
     const formData: Omit<Transaction, 'id' | 'timestamp'> = {
       date,
       code: code.toUpperCase(),
