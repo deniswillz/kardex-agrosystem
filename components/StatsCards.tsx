@@ -2,13 +2,21 @@ import React from 'react';
 import { ArrowUpCircle, ArrowDownCircle, Package, Activity, AlertTriangle } from 'lucide-react';
 import { DashboardStats } from '../types';
 
+interface CriticalItem {
+  code: string;
+  name: string;
+  balance: number;
+  min_stock: number;
+}
+
 interface StatsCardsProps {
   stats: DashboardStats;
   dateFilter: '7d' | '15d' | '30d' | '90d' | 'ALL';
   onFilterChange: (filter: '7d' | '15d' | '30d' | '90d' | 'ALL') => void;
+  criticalItemsList?: CriticalItem[];
 }
 
-export const StatsCards: React.FC<StatsCardsProps> = ({ stats, dateFilter, onFilterChange }) => {
+export const StatsCards: React.FC<StatsCardsProps> = ({ stats, dateFilter, onFilterChange, criticalItemsList = [] }) => {
   return (
     <div className="space-y-4 mb-6">
       <div className="flex justify-end">
@@ -27,7 +35,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, dateFilter, onFil
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Saldo Total</p>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Produtos</p>
             <h3 className="text-2xl font-bold text-slate-800">{stats.totalStockCount}</h3>
           </div>
           <div className="p-3 bg-blue-50 rounded-full text-blue-600">
@@ -48,7 +56,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, dateFilter, onFil
         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Entradas</p>
-            <h3 className="text-2xl font-bold text-emerald-600">+{stats.entriesToday}</h3>
+            <h3 className="text-2xl font-bold text-emerald-600">{stats.entriesToday}</h3>
           </div>
           <div className="p-3 bg-emerald-50 rounded-full text-emerald-600">
             <ArrowUpCircle size={24} />
@@ -58,14 +66,14 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, dateFilter, onFil
         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Saídas</p>
-            <h3 className="text-2xl font-bold text-red-600">-{stats.exitsToday}</h3>
+            <h3 className="text-2xl font-bold text-red-600">{stats.exitsToday}</h3>
           </div>
           <div className="p-3 bg-red-50 rounded-full text-red-600">
             <ArrowDownCircle size={24} />
           </div>
         </div>
 
-        {/* New Critical Items Card */}
+        {/* Critical Items Card */}
         <div className={`p-4 rounded-xl shadow-sm border flex items-center justify-between ${stats.criticalItems > 0
           ? 'bg-amber-50 border-amber-200'
           : 'bg-white border-slate-100'
@@ -84,6 +92,30 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, dateFilter, onFil
           </div>
         </div>
       </div>
+
+      {/* Critical Items Alert List */}
+      {criticalItemsList.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle size={20} className="text-red-600" />
+            <h4 className="font-bold text-red-800">Produtos com Estoque Crítico</h4>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {criticalItemsList.map(item => (
+              <div key={item.code} className="bg-white rounded-lg p-3 border border-red-100 flex justify-between items-center">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-slate-800 truncate">{item.name}</p>
+                  <p className="text-xs text-slate-500">{item.code}</p>
+                </div>
+                <div className="text-right ml-2">
+                  <p className="text-lg font-bold text-red-600">{item.balance}</p>
+                  <p className="text-[10px] text-slate-400">Mín: {item.min_stock}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

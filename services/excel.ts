@@ -304,7 +304,7 @@ export const importInventoryFromExcel = async (file: File): Promise<InventoryImp
           return {
             code: String(code).toUpperCase().trim(),
             name: String(name).trim(),
-            quantity: Math.abs(Number(qty)) || 0,
+            quantity: Math.round(Math.abs(Number(qty))) || 0,
             warehouse: String(warehouse).trim() || 'Geral',
             address: String(address).trim() || undefined,
             min_stock: Math.abs(Number(minStock)) || undefined

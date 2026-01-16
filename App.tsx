@@ -8,7 +8,9 @@ import {
   deleteTransaction,
   hasLocalData,
   migrateLocalToSupabase,
-  exportToJson
+  exportToJson,
+  shouldRunAutoBackup,
+  markBackupDone
 } from './services/storage';
 import { exportToExcel, importFromExcel, downloadTemplate, InventoryImportItem } from './services/excel';
 import { StatsCards } from './components/StatsCards';
@@ -78,6 +80,27 @@ function AppContent() {
     };
   }, [user]);
 
+  // Auto-backup check at 17:45
+  useEffect(() => {
+    if (!user) return;
+
+    const checkAutoBackup = async () => {
+      if (shouldRunAutoBackup() && transactions.length > 0) {
+        console.log('🕔 Auto-backup triggered at 17:45');
+        exportToJson(transactions);
+        markBackupDone();
+      }
+    };
+
+    // Check immediately on load
+    checkAutoBackup();
+
+    // Check every minute
+    const interval = setInterval(checkAutoBackup, 60000);
+
+    return () => clearInterval(interval);
+  }, [user, transactions]);
+
   // Handle migration
   const handleMigration = async (shouldMigrate: boolean) => {
     setShowMigrationModal(false);
@@ -118,53 +141,80 @@ function AppContent() {
       return t.date >= minDateStr;
     });
 
-    // For Critical Items and Current Balance, we ALWAYS use ALL transactions to get the current real state
-    // But for "Movimentos", "Entradas" and "Saídas" cards, we use the filtered range.
-
-    // 1. Calculate Current Balance (Always based on ALL history)
-    let currentBalance = 0;
-    const stockByCode: Record<string, { balance: number; min_stock: number }> = {};
+    // For Critical Items and Product Count, we ALWAYS use ALL transactions to get the current real state
+    // Build stock by product code
+    const stockByCode: Record<string, { code: string; name: string; balance: number; min_stock: number }> = {};
 
     transactions.forEach(t => {
       const affectsStock = !t.category_id || t.category_id !== 2;
-      if (affectsStock) {
-        const qty = t.quantity;
-        if (t.type === 'ENTRADA') {
-          currentBalance += qty;
-        } else {
-          currentBalance -= qty;
-        }
 
-        if (!stockByCode[t.code]) {
-          stockByCode[t.code] = { balance: 0, min_stock: t.min_stock || 0 };
-        }
+      if (!stockByCode[t.code]) {
+        stockByCode[t.code] = { code: t.code, name: t.name, balance: 0, min_stock: t.min_stock || 0 };
+      }
+
+      if (affectsStock) {
         if (t.type === 'ENTRADA') {
-          stockByCode[t.code].balance += qty;
+          stockByCode[t.code].balance += t.quantity;
         } else {
-          stockByCode[t.code].balance -= qty;
+          stockByCode[t.code].balance -= t.quantity;
         }
       }
-      if (t.min_stock && stockByCode[t.code]) {
+
+      // Update min_stock if defined
+      if (t.min_stock && t.min_stock > 0) {
         stockByCode[t.code].min_stock = t.min_stock;
       }
     });
 
+    // Count unique products with positive balance
+    const productsInStock = Object.values(stockByCode).filter(item => item.balance > 0).length;
+
+    // Critical items: only those with min_stock > 0 AND balance <= min_stock
     const criticalItems = Object.values(stockByCode).filter(
-      item => item.balance < 0 || (item.min_stock > 0 && item.balance <= item.min_stock)
+      item => item.min_stock > 0 && item.balance <= item.min_stock
     ).length;
 
-    // 2. Calculate Period Stats (Entradas/Saídas in the selected range)
-    const periodEntries = filteredTransactions.filter(t => t.type === 'ENTRADA').reduce((a, b) => a + b.quantity, 0);
-    const periodExits = filteredTransactions.filter(t => t.type === 'SAIDA').reduce((a, b) => a + b.quantity, 0);
+    // Count of movements in period (not sum of quantities)
+    const entryMovementsCount = filteredTransactions.filter(t => t.type === 'ENTRADA' && (!t.category_id || t.category_id !== 2)).length;
+    const exitMovementsCount = filteredTransactions.filter(t => t.type === 'SAIDA' && (!t.category_id || t.category_id !== 2)).length;
 
     return {
-      totalStockCount: currentBalance, // Always real total
-      totalTransactions: filteredTransactions.length,
-      entriesToday: periodEntries, // Reusing field name but now implies "In Period"
-      exitsToday: periodExits, // Reusing field name but now implies "In Period"
+      totalStockCount: productsInStock, // Count of unique products with balance > 0
+      totalTransactions: filteredTransactions.length, // Count of all movements
+      entriesToday: entryMovementsCount, // Count of entry movements
+      exitsToday: exitMovementsCount, // Count of exit movements
       criticalItems
     };
   }, [transactions, dateFilter]);
+
+  // Separate memo for critical items list (for alert display)
+  const criticalItemsList = useMemo(() => {
+    const stockByCode: Record<string, { code: string; name: string; balance: number; min_stock: number }> = {};
+
+    transactions.forEach(t => {
+      const affectsStock = !t.category_id || t.category_id !== 2;
+
+      if (!stockByCode[t.code]) {
+        stockByCode[t.code] = { code: t.code, name: t.name, balance: 0, min_stock: t.min_stock || 0 };
+      }
+
+      if (affectsStock) {
+        if (t.type === 'ENTRADA') {
+          stockByCode[t.code].balance += t.quantity;
+        } else {
+          stockByCode[t.code].balance -= t.quantity;
+        }
+      }
+
+      if (t.min_stock && t.min_stock > 0) {
+        stockByCode[t.code].min_stock = t.min_stock;
+      }
+    });
+
+    return Object.values(stockByCode)
+      .filter(item => item.min_stock > 0 && item.balance <= item.min_stock)
+      .sort((a, b) => a.code.localeCompare(b.code));
+  }, [transactions]);
 
   const handleAddTransaction = async (newTx: Omit<Transaction, 'id' | 'timestamp'>) => {
     setSyncStatus('SYNCING');
@@ -546,6 +596,7 @@ function AppContent() {
                   stats={stats}
                   dateFilter={dateFilter}
                   onFilterChange={setDateFilter}
+                  criticalItemsList={criticalItemsList}
                 />
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2">

@@ -300,3 +300,106 @@ export const clearAllData = async (): Promise<boolean> => {
     return false;
   }
 };
+
+// Restore from backup JSON file
+export const restoreFromBackup = async (file: File, userId?: string): Promise<{ success: boolean; count: number; error?: string }> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+      try {
+        const content = e.target?.result as string;
+        const data = JSON.parse(content);
+
+        if (!Array.isArray(data)) {
+          resolve({ success: false, count: 0, error: 'Formato inválido: esperado um array de transações.' });
+          return;
+        }
+
+        if (data.length === 0) {
+          resolve({ success: false, count: 0, error: 'Arquivo de backup vazio.' });
+          return;
+        }
+
+        // Validate structure of first item
+        const sample = data[0];
+        if (!sample.code || !sample.name || !sample.type) {
+          resolve({ success: false, count: 0, error: 'Formato de dados inválido. Verifique se é um backup válido.' });
+          return;
+        }
+
+        let restored = 0;
+
+        for (const tx of data) {
+          const { error } = await supabase
+            .from('transactions')
+            .insert({
+              date: tx.date,
+              code: String(tx.code).toUpperCase(),
+              name: tx.name,
+              type: tx.type,
+              quantity: Math.round(Math.abs(Number(tx.quantity))) || 0,
+              warehouse: tx.warehouse || 'Geral',
+              address: tx.address || null,
+              responsible: tx.responsible || null,
+              category_id: tx.category_id || null,
+              photos: tx.photos || [],
+              user_id: userId || null
+            });
+
+          if (!error) {
+            restored++;
+          }
+        }
+
+        resolve({ success: true, count: restored });
+      } catch (err) {
+        console.error('Restore error:', err);
+        resolve({ success: false, count: 0, error: 'Erro ao processar arquivo. Verifique se é um JSON válido.' });
+      }
+    };
+
+    reader.onerror = () => {
+      resolve({ success: false, count: 0, error: 'Erro ao ler o arquivo.' });
+    };
+
+    reader.readAsText(file);
+  });
+};
+
+// Auto-backup constants
+const LAST_BACKUP_KEY = 'kardex_last_backup_date';
+const AUTO_BACKUP_HOUR = 17;
+const AUTO_BACKUP_MINUTE = 45;
+
+// Check if auto-backup should run (returns true if backup needed)
+export const shouldRunAutoBackup = (): boolean => {
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const today = now.toISOString().split('T')[0];
+
+  // Check if we're in the backup window (17:45 - 17:59)
+  if (currentHour !== AUTO_BACKUP_HOUR || currentMinute < AUTO_BACKUP_MINUTE) {
+    return false;
+  }
+
+  // Check if backup was already done today
+  const lastBackup = localStorage.getItem(LAST_BACKUP_KEY);
+  if (lastBackup === today) {
+    return false;
+  }
+
+  return true;
+};
+
+// Mark backup as done for today
+export const markBackupDone = () => {
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem(LAST_BACKUP_KEY, today);
+};
+
+// Get last backup date
+export const getLastBackupDate = (): string | null => {
+  return localStorage.getItem(LAST_BACKUP_KEY);
+};

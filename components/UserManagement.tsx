@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { User, Plus, Pencil, Trash2, Shield, UserCheck, Loader2, X, Save, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, Plus, Pencil, Trash2, Shield, UserCheck, Loader2, X, Save, Eye, EyeOff, AlertTriangle, Download, Upload } from 'lucide-react';
 import { useAuth } from './AuthContext';
-import { clearAllData } from '../services/storage';
+import { clearAllData, restoreFromBackup, getLastBackupDate, markBackupDone, loadTransactions, exportToJson } from '../services/storage';
 
 interface UserData {
     id: string;
@@ -26,10 +26,13 @@ export const UserManagement: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
     const [formLoading, setFormLoading] = useState(false);
+    const [lastBackup, setLastBackup] = useState<string | null>(null);
+    const restoreInputRef = useRef<HTMLInputElement>(null);
 
     // Load users on mount
     useEffect(() => {
         loadUsers();
+        setLastBackup(getLastBackupDate());
     }, []);
 
     const loadUsers = async () => {
@@ -156,6 +159,48 @@ export const UserManagement: React.FC = () => {
         }
     };
 
+    const handleBackup = async () => {
+        setLoading(true);
+        try {
+            const data = await loadTransactions();
+            exportToJson(data);
+            markBackupDone();
+            setLastBackup(new Date().toISOString().split('T')[0]);
+            alert('Backup realizado com sucesso!');
+        } catch (error) {
+            alert('Erro ao realizar backup.');
+        }
+        setLoading(false);
+    };
+
+    const handleRestore = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const confirm1 = window.confirm(
+            'ATENÇÃO: A restauração adicionará os dados do backup ao sistema atual.\n\n' +
+            'Se quiser substituir completamente, primeiro use "Resetar Dados" e depois restaure.\n\n' +
+            'Deseja continuar?'
+        );
+        if (!confirm1) {
+            if (restoreInputRef.current) restoreInputRef.current.value = '';
+            return;
+        }
+
+        setLoading(true);
+        const result = await restoreFromBackup(file, user?.id);
+        setLoading(false);
+
+        if (result.success) {
+            alert(`Restauração concluída! ${result.count} registros importados.`);
+            window.location.reload();
+        } else {
+            alert(`Erro na restauração: ${result.error}`);
+        }
+
+        if (restoreInputRef.current) restoreInputRef.current.value = '';
+    };
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
             <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -167,13 +212,36 @@ export const UserManagement: React.FC = () => {
                     </span>
                 </h2>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                    <button
+                        onClick={handleBackup}
+                        disabled={loading}
+                        className="bg-emerald-100 text-emerald-700 px-3 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-emerald-200 transition-colors text-sm disabled:opacity-50"
+                        title={lastBackup ? `Último backup: ${lastBackup}` : 'Nenhum backup realizado'}
+                    >
+                        <Download size={16} /> Backup
+                    </button>
+                    <button
+                        onClick={() => restoreInputRef.current?.click()}
+                        disabled={loading}
+                        className="bg-blue-100 text-blue-700 px-3 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-blue-200 transition-colors text-sm disabled:opacity-50"
+                        title="Restaurar dados de um arquivo de backup"
+                    >
+                        <Upload size={16} /> Restaurar
+                    </button>
+                    <input
+                        type="file"
+                        ref={restoreInputRef}
+                        onChange={handleRestore}
+                        accept=".json"
+                        className="hidden"
+                    />
                     <button
                         onClick={handleResetData}
                         className="bg-red-100 text-red-700 px-3 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-red-200 transition-colors text-sm"
                         title="Apagar todos os dados do sistema"
                     >
-                        <AlertTriangle size={16} /> Resetar Dados
+                        <AlertTriangle size={16} /> Resetar
                     </button>
                     <button
                         onClick={() => { resetForm(); setShowForm(true); }}

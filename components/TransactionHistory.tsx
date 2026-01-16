@@ -73,7 +73,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transact
       }
 
       return matchesSearch && matchesType && matchesOperationType && matchesResponsible && matchesWarehouse && matchesDateRange;
-    }).sort((a, b) => b.timestamp - a.timestamp);
+    }).sort((a, b) => a.code.localeCompare(b.code));
   }, [transactions, searchTerm, filterType, filterOperationType, filterResponsible, filterWarehouse, dateFrom, dateTo]);
 
   const hasActiveFilters = filterOperationType !== 'ALL' || filterResponsible !== 'ALL' || filterWarehouse !== 'ALL' || dateFrom || dateTo;
@@ -129,8 +129,8 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transact
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors ${showAdvancedFilters || hasActiveFilters
-                  ? 'bg-primary-100 text-primary-700 border border-primary-200'
-                  : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
+                ? 'bg-primary-100 text-primary-700 border border-primary-200'
+                : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
                 }`}
             >
               <Filter size={16} />
