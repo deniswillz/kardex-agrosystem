@@ -552,19 +552,19 @@ export const MovementForm: React.FC<MovementFormProps> = ({
               />
               <p className="text-[10px] text-slate-400 mt-0.5">Preenchido automaticamente</p>
             </div>
-            {/* Min Stock */}
+            {/* Min Stock - Read Only */}
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
                 <AlertTriangle size={12} /> Estoque Mínimo
               </label>
               <input
                 type="number"
-                min="0"
-                value={minStock}
-                onChange={(e) => setMinStock(e.target.value ? Number(e.target.value) : '')}
-                className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                placeholder="0"
+                value={minStock || 0}
+                className="bg-slate-100 border border-slate-200 text-slate-600 text-sm rounded-lg block w-full p-2.5 cursor-not-allowed"
+                disabled
+                readOnly
               />
+              <p className="text-[10px] text-slate-400 mt-0.5">Edite em Controle de Estoque</p>
             </div>
           </div>
 

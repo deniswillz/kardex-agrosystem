@@ -7,9 +7,10 @@ interface InventoryListProps {
   transactions: Transaction[];
   onSelectCode: (code: string) => void;
   onImportInventory?: (items: InventoryImportItem[]) => Promise<void>;
+  onUpdateMinStock?: (code: string, name: string, minStock: number) => Promise<void>;
 }
 
-export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSelectCode, onImportInventory }) => {
+export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSelectCode, onImportInventory, onUpdateMinStock }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'OK' | 'CRITICAL' | 'NEGATIVE'>('ALL');
   const [isImporting, setIsImporting] = useState(false);
@@ -27,7 +28,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
       lastDate: string;
       min_stock: number;
       contagens: number;
-      lastContagem?: { quantity: number; date: string };
+      lastContagem?: { quantity: number; date: string; timestamp?: number };
     }> = {};
 
     transactions.forEach(t => {
@@ -56,9 +57,14 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
 
       if (isContagem) {
         map[t.code].contagens += 1;
-        // Track last contagem
-        if (!map[t.code].lastContagem || t.timestamp > new Date(map[t.code].lastContagem.date).getTime()) {
-          map[t.code].lastContagem = { quantity: t.quantity, date: t.date };
+        // Track last (most recent) contagem by timestamp
+        const currentTimestamp = t.timestamp || new Date(t.date).getTime();
+        const lastTimestamp = map[t.code].lastContagem
+          ? (map[t.code].lastContagem.timestamp || new Date(map[t.code].lastContagem.date).getTime())
+          : 0;
+
+        if (currentTimestamp > lastTimestamp) {
+          map[t.code].lastContagem = { quantity: t.quantity, date: t.date, timestamp: currentTimestamp };
         }
       } else {
         // Only Movimentação affects stock
@@ -308,9 +314,31 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm hidden sm:table-cell">
-                    <span className={item.min_stock > 0 ? "text-amber-600 font-medium" : "text-slate-400"}>
-                      {item.min_stock || 0}
-                    </span>
+                    <div className="flex items-center justify-end gap-1">
+                      <span className={item.min_stock > 0 ? "text-amber-600 font-medium" : "text-slate-400"}>
+                        {item.min_stock || 0}
+                      </span>
+                      {onUpdateMinStock && (
+                        <button
+                          onClick={() => {
+                            const newValue = window.prompt(
+                              `Estoque Mínimo para ${item.name}\n\nValor atual: ${item.min_stock || 0}`,
+                              String(item.min_stock || 0)
+                            );
+                            if (newValue !== null) {
+                              const num = parseInt(newValue, 10);
+                              if (!isNaN(num) && num >= 0) {
+                                onUpdateMinStock(item.code, item.name, num);
+                              }
+                            }
+                          }}
+                          className="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                          title="Editar estoque mínimo"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex gap-2 justify-end">

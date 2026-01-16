@@ -283,6 +283,36 @@ function AppContent() {
     setView('FORM');
   };
 
+  // Handle min_stock update from inventory list
+  const handleUpdateMinStock = async (code: string, name: string, minStock: number) => {
+    setSyncStatus('SYNCING');
+    const today = new Date().toISOString().split('T')[0];
+
+    // Create a special "min_stock update" transaction (category 2 = Contagem, won't affect stock)
+    const txData = {
+      date: today,
+      code: code,
+      name: name,
+      type: 'ENTRADA' as const,
+      quantity: 0, // Zero quantity, just updating min_stock
+      warehouse: 'Sistema',
+      address: '',
+      responsible: user?.name || 'Sistema',
+      photos: [],
+      category_id: 2, // Contagem type - doesn't affect stock
+      min_stock: minStock
+    };
+
+    const result = await saveTransaction(txData, user?.id);
+    if (result) {
+      setTransactions(prev => [result, ...prev]);
+      setSyncStatus('SYNCED');
+    } else {
+      setSyncStatus('OFFLINE');
+      alert('Erro ao atualizar estoque mínimo.');
+    }
+  };
+
   // Handle inventory import from Excel (Upsert - replaces existing items)
   const handleInventoryImport = async (items: InventoryImportItem[]) => {
     setSyncStatus('SYNCING');
@@ -644,6 +674,7 @@ function AppContent() {
                   transactions={transactions}
                   onSelectCode={handleSelectInventoryItem}
                   onImportInventory={handleInventoryImport}
+                  onUpdateMinStock={handleUpdateMinStock}
                 />
               </div>
             )}
