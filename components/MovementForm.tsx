@@ -104,10 +104,12 @@ export const MovementForm: React.FC<MovementFormProps> = ({
           if (!warehouse) setWarehouse(knownItem.warehouse);
           if (!address && knownItem.address) setAddress(knownItem.address);
 
-          // Auto-fill min_stock from latest transaction with min_stock value
-          const itemWithMinStock = itemTransactions.find(t => t.min_stock && t.min_stock > 0);
-          if (itemWithMinStock && itemWithMinStock.min_stock) {
-            setMinStock(itemWithMinStock.min_stock);
+          // Auto-fill min_stock from latest transaction with min_stock value (only if empty)
+          if (!minStock) {
+            const itemWithMinStock = itemTransactions.find(t => t.min_stock && t.min_stock > 0);
+            if (itemWithMinStock && itemWithMinStock.min_stock) {
+              setMinStock(itemWithMinStock.min_stock);
+            }
           }
         }
       }

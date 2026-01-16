@@ -288,14 +288,14 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
                   <td className="px-6 py-4 whitespace-nowrap text-center hidden sm:table-cell">
                     {item.contagens > 0 && item.lastContagem ? (
                       <div className="flex flex-col items-center">
-                        <span className="inline-flex items-center gap-1 text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
-                          <ClipboardList size={12} /> {item.contagens}x
-                        </span>
-                        <span className="text-[10px] text-slate-500 mt-0.5">
+                        <span className="text-sm font-bold text-purple-700">
                           {item.lastContagem.quantity} un
                         </span>
                         <span className="text-[10px] text-slate-400">
                           {new Date(item.lastContagem.date).toLocaleDateString('pt-BR')}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] text-slate-500 mt-0.5">
+                          <ClipboardList size={10} /> {item.contagens}x
                         </span>
                         {item.lastContagem.quantity !== item.balance && (
                           <span className="text-[10px] text-red-600 font-bold flex items-center gap-0.5 mt-1">
