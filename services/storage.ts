@@ -27,23 +27,45 @@ export const markAsMigrated = () => {
   localStorage.setItem(MIGRATION_KEY, 'true');
 };
 
-// Load transactions from Supabase
+// Load transactions from Supabase (with pagination to bypass 1000 row limit)
 export const loadTransactions = async (): Promise<Transaction[]> => {
   try {
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(10000);
+    const PAGE_SIZE = 1000;
+    let allData: TransactionDB[] = [];
+    let page = 0;
+    let hasMore = true;
 
-    if (error) {
-      console.error('Supabase load error:', error);
-      // Fallback to localStorage
-      return loadLocalTransactions();
+    // Fetch in batches until we get all records
+    while (hasMore) {
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) {
+        console.error('Supabase load error:', error);
+        if (page === 0) return loadLocalTransactions();
+        break;
+      }
+
+      if (data && data.length > 0) {
+        allData = [...allData, ...data];
+        hasMore = data.length === PAGE_SIZE;
+        page++;
+        console.log(`📦 Loaded page ${page}: ${data.length} records (total: ${allData.length})`);
+      } else {
+        hasMore = false;
+      }
     }
 
+    console.log(`✅ Total transactions loaded: ${allData.length}`);
+
     // Transform to app format
-    return (data || []).map((t: TransactionDB) => ({
+    return allData.map((t: TransactionDB) => ({
       id: t.id,
       date: t.date,
       code: t.code,
