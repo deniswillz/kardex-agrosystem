@@ -48,6 +48,7 @@ export const MovementForm: React.FC<MovementFormProps> = ({
   const streamRef = useRef<MediaStream | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const autoFilledCodeRef = useRef<string>(''); // Track which code has been auto-filled
 
   // Detect mobile device
   useEffect(() => {
@@ -96,25 +97,27 @@ export const MovementForm: React.FC<MovementFormProps> = ({
       setCurrentStock((totalEnt - totalSai) + adjust);
 
       // Auto-fill name, warehouse, min_stock if known and not editing
-      if (!initialData) {
+      // Only auto-fill once per code change
+      if (!initialData && autoFilledCodeRef.current !== code) {
         const itemTransactions = transactions.filter(t => t.code === code);
         const knownItem = itemTransactions.find(t => t.code === code);
         if (knownItem) {
-          if (!name) setName(knownItem.name);
-          if (!warehouse) setWarehouse(knownItem.warehouse);
-          if (!address && knownItem.address) setAddress(knownItem.address);
+          setName(knownItem.name);
+          setWarehouse(knownItem.warehouse);
+          if (knownItem.address) setAddress(knownItem.address);
 
-          // Auto-fill min_stock from latest transaction with min_stock value (only if empty)
-          if (!minStock) {
-            const itemWithMinStock = itemTransactions.find(t => t.min_stock && t.min_stock > 0);
-            if (itemWithMinStock && itemWithMinStock.min_stock) {
-              setMinStock(itemWithMinStock.min_stock);
-            }
+          // Auto-fill min_stock from latest transaction with min_stock value
+          const itemWithMinStock = itemTransactions.find(t => t.min_stock && t.min_stock > 0);
+          if (itemWithMinStock && itemWithMinStock.min_stock) {
+            setMinStock(itemWithMinStock.min_stock);
           }
+
+          autoFilledCodeRef.current = code; // Mark as auto-filled
         }
       }
     } else {
       setCurrentStock(null);
+      autoFilledCodeRef.current = ''; // Reset when code is cleared
     }
   }, [code, transactions, initialData]);
 
