@@ -190,6 +190,26 @@ export const deleteTransaction = async (id: string): Promise<boolean> => {
   }
 };
 
+// Delete all transactions for a specific code (for upsert import)
+export const deleteTransactionsByCode = async (code: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('code', code.toUpperCase());
+
+    if (error) {
+      console.error('Delete by code error:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Failed to delete by code from Supabase", error);
+    return false;
+  }
+};
+
 // Migrate local data to Supabase
 export const migrateLocalToSupabase = async (userId: string): Promise<number> => {
   const localData = loadLocalTransactions();

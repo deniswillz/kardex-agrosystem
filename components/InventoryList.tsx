@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { Transaction } from '../types';
-import { Search, Package, ArrowRightLeft, AlertTriangle, Filter, ClipboardList, Upload, Download, Loader2, FileSpreadsheet } from 'lucide-react';
+import { Search, Package, ArrowRightLeft, AlertTriangle, Filter, ClipboardList, Upload, Download, Loader2, FileSpreadsheet, Pencil } from 'lucide-react';
 import { downloadInventoryTemplate, importInventoryFromExcel, InventoryImportItem } from '../services/excel';
 
 interface InventoryListProps {
@@ -309,19 +309,22 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => onSelectCode(item.code)}
-                      className="text-primary-600 hover:text-primary-900 bg-primary-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 ml-auto"
-                    >
-                      <ArrowRightLeft size={16} /> <span className="hidden sm:inline">Movimentar</span>
-                    </button>
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => onSelectCode(item.code)}
+                        className="text-primary-600 hover:text-primary-900 bg-primary-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                        title="Nova movimentação"
+                      >
+                        <ArrowRightLeft size={16} /> <span className="hidden sm:inline">Movimentar</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
             })}
             {filteredInventory.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-slate-500">
+                <td colSpan={7} className="px-6 py-10 text-center text-slate-500">
                   Nenhum item encontrado. Registre uma movimentação para começar.
                 </td>
               </tr>

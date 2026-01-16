@@ -6,6 +6,7 @@ import {
   saveTransaction,
   updateTransaction,
   deleteTransaction,
+  deleteTransactionsByCode,
   hasLocalData,
   migrateLocalToSupabase,
   exportToJson,
@@ -282,7 +283,7 @@ function AppContent() {
     setView('FORM');
   };
 
-  // Handle inventory import from Excel (Optimized)
+  // Handle inventory import from Excel (Upsert - replaces existing items)
   const handleInventoryImport = async (items: InventoryImportItem[]) => {
     setSyncStatus('SYNCING');
     setLoadingImport(true);
@@ -291,11 +292,23 @@ function AppContent() {
     // Filter valid items
     const validItems = items.filter(item => item.quantity > 0);
 
-    // Process in batches of 50 to allow parallelism without overwhelming Supabase
+    // Get unique codes to delete
+    const codesToDelete = [...new Set(validItems.map(item => item.code.toUpperCase()))];
+
+    // Process in batches of 50
     const BATCH_SIZE = 50;
     const newTransactions: Transaction[] = [];
 
     try {
+      // First, delete existing transactions for these codes (in batches)
+      console.log(`🗑️ Removing existing entries for ${codesToDelete.length} codes...`);
+      for (let i = 0; i < codesToDelete.length; i += BATCH_SIZE) {
+        const batch = codesToDelete.slice(i, i + BATCH_SIZE);
+        await Promise.all(batch.map(code => deleteTransactionsByCode(code)));
+      }
+
+      // Then insert new transactions
+      console.log(`📥 Inserting ${validItems.length} new entries...`);
       for (let i = 0; i < validItems.length; i += BATCH_SIZE) {
         const batch = validItems.slice(i, i + BATCH_SIZE);
 
@@ -323,18 +336,15 @@ function AppContent() {
         });
       }
 
-      // Update state once at the end
-      if (newTransactions.length > 0) {
-        setTransactions(prev => [...newTransactions, ...prev]);
-        alert(`${newTransactions.length} itens importados e atualizados com sucesso!`);
-      } else {
-        alert("Nenhum item novo foi salvo. Verifique se os itens têm quantidade > 0.");
-      }
+      // Reload all transactions to get fresh state
+      const freshData = await loadTransactions();
+      setTransactions(freshData);
 
+      alert(`✅ ${newTransactions.length} itens importados/atualizados com sucesso!`);
       setSyncStatus('SYNCED');
     } catch (error) {
       console.error("Critical error during bulk import:", error);
-      alert("Ocorreu um erro durante a importação em massa. Alguns itens podem não ter sido salvos.");
+      alert("Ocorreu um erro durante a importação. Alguns itens podem não ter sido salvos.");
       setSyncStatus('OFFLINE');
     } finally {
       setLoadingImport(false);
