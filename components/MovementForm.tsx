@@ -95,13 +95,20 @@ export const MovementForm: React.FC<MovementFormProps> = ({
 
       setCurrentStock((totalEnt - totalSai) + adjust);
 
-      // Auto-fill name, warehouse if known and not editing
+      // Auto-fill name, warehouse, min_stock if known and not editing
       if (!initialData) {
-        const knownItem = transactions.find(t => t.code === code);
+        const itemTransactions = transactions.filter(t => t.code === code);
+        const knownItem = itemTransactions.find(t => t.code === code);
         if (knownItem) {
           if (!name) setName(knownItem.name);
           if (!warehouse) setWarehouse(knownItem.warehouse);
           if (!address && knownItem.address) setAddress(knownItem.address);
+
+          // Auto-fill min_stock from latest transaction with min_stock value
+          const itemWithMinStock = itemTransactions.find(t => t.min_stock && t.min_stock > 0);
+          if (itemWithMinStock && itemWithMinStock.min_stock) {
+            setMinStock(itemWithMinStock.min_stock);
+          }
         }
       }
     } else {

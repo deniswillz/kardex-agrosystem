@@ -286,14 +286,20 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center hidden sm:table-cell">
-                    {item.contagens > 0 ? (
+                    {item.contagens > 0 && item.lastContagem ? (
                       <div className="flex flex-col items-center">
                         <span className="inline-flex items-center gap-1 text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
-                          <ClipboardList size={12} /> {item.contagens}
+                          <ClipboardList size={12} /> {item.contagens}x
                         </span>
-                        {item.lastContagem && (
-                          <span className="text-[10px] text-slate-400 mt-0.5">
-                            Última: {item.lastContagem.quantity} un
+                        <span className="text-[10px] text-slate-500 mt-0.5">
+                          {item.lastContagem.quantity} un
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {new Date(item.lastContagem.date).toLocaleDateString('pt-BR')}
+                        </span>
+                        {item.lastContagem.quantity !== item.balance && (
+                          <span className="text-[10px] text-red-600 font-bold flex items-center gap-0.5 mt-1">
+                            <AlertTriangle size={10} /> Divergente
                           </span>
                         )}
                       </div>
@@ -302,11 +308,9 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm hidden sm:table-cell">
-                    {item.min_stock > 0 ? (
-                      <span className="text-amber-600 font-medium">{item.min_stock}</span>
-                    ) : (
-                      <span className="text-slate-400">-</span>
-                    )}
+                    <span className={item.min_stock > 0 ? "text-amber-600 font-medium" : "text-slate-400"}>
+                      {item.min_stock || 0}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex gap-2 justify-end">
