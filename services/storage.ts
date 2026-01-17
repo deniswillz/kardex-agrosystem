@@ -191,6 +191,27 @@ export const deleteTransaction = async (id: string): Promise<boolean> => {
   }
 };
 
+// Update min_stock for all transactions with a specific code
+export const updateMinStockByCode = async (code: string, minStock: number): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('transactions')
+      .update({ min_stock: minStock })
+      .eq('code', code.toUpperCase());
+
+    if (error) {
+      console.error('Update min_stock error:', error);
+      return false;
+    }
+
+    console.log(`✅ min_stock updated to ${minStock} for code ${code}`);
+    return true;
+  } catch (error) {
+    console.error("Failed to update min_stock in Supabase", error);
+    return false;
+  }
+};
+
 // Delete all transactions for a specific code (for upsert import)
 export const deleteTransactionsByCode = async (code: string): Promise<boolean> => {
   try {
