@@ -42,8 +42,11 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
     );
 
     filteredTx.forEach(t => {
-      if (!map[t.code]) {
-        map[t.code] = {
+      // Key by code + warehouse to separate items in different warehouses
+      const key = `${t.code}|${t.warehouse}`;
+
+      if (!map[key]) {
+        map[key] = {
           code: t.code,
           name: t.name,
           warehouse: t.warehouse || 'Geral',
@@ -58,34 +61,34 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
       }
 
       // Update to most recent values
-      if (t.timestamp > new Date(map[t.code].lastDate).getTime()) {
-        map[t.code].name = t.name;
-        map[t.code].lastDate = t.date;
-        if (t.min_stock) map[t.code].min_stock = t.min_stock;
+      if (t.timestamp > new Date(map[key].lastDate).getTime()) {
+        map[key].name = t.name;
+        map[key].lastDate = t.date;
+        if (t.min_stock) map[key].min_stock = t.min_stock;
       }
 
       // Check if it's a Contagem (category_id = 2)
       const isContagem = t.category_id === 2;
 
       if (isContagem) {
-        map[t.code].contagens += 1;
+        map[key].contagens += 1;
         // Track last (most recent) contagem by timestamp
         const currentTimestamp = t.timestamp || new Date(t.date).getTime();
-        const lastTimestamp = map[t.code].lastContagem
-          ? (map[t.code].lastContagem.timestamp || new Date(map[t.code].lastContagem.date).getTime())
+        const lastTimestamp = map[key].lastContagem
+          ? (map[key].lastContagem.timestamp || new Date(map[key].lastContagem.date).getTime())
           : 0;
 
         if (currentTimestamp > lastTimestamp) {
-          map[t.code].lastContagem = { quantity: t.quantity, date: t.date, timestamp: currentTimestamp };
+          map[key].lastContagem = { quantity: t.quantity, date: t.date, timestamp: currentTimestamp };
         }
       } else {
         // Only Movimentação affects stock
         if (t.type === 'ENTRADA') {
-          map[t.code].entries += t.quantity;
-          map[t.code].balance += t.quantity;
+          map[key].entries += t.quantity;
+          map[key].balance += t.quantity;
         } else {
-          map[t.code].exits += t.quantity;
-          map[t.code].balance -= t.quantity;
+          map[key].exits += t.quantity;
+          map[key].balance -= t.quantity;
         }
       }
     });

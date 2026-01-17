@@ -1,28 +1,33 @@
-// Tipos de operação - Movimentação altera estoque, Contagem apenas verifica
-export const OPERATION_TYPES = [
-    { id: 1, name: 'Movimentação', color: '#3b82f6', affectsStock: true },
-    { id: 2, name: 'Contagem', color: '#8b5cf6', affectsStock: false },
+// Warehouse list with descriptions
+export const WAREHOUSES = [
+    { code: '01', name: 'Chicote' },
+    { code: '02', name: 'Entrada' },
+    { code: '03', name: 'Importado' },
+    { code: '04', name: 'Chicote / Mecânica / Eletrônica' },
+    { code: '08', name: 'P&D' },
+    { code: '11', name: 'Filial' },
+    { code: '19', name: 'Qualidade' },
+    { code: '20', name: 'Eletrônica' },
+    { code: '21', name: 'Assistência' },
+    { code: '22', name: 'Mecânica' },
 ];
 
-export const getOperationTypeColor = (typeId: number | null | undefined): string => {
-    if (!typeId) return '#6b7280';
-    const type = OPERATION_TYPES.find(t => t.id === typeId);
-    return type?.color || '#6b7280';
-};
+// Warehouses allowed in inventory views (filtering)
+export const ALLOWED_WAREHOUSES = ['01', '20', '22'];
 
-export const getOperationTypeName = (typeId: number | null | undefined): string => {
-    if (!typeId) return 'Movimentação';
-    const type = OPERATION_TYPES.find(t => t.id === typeId);
-    return type?.name || 'Movimentação';
-};
+// Operation types (for lookups)
+export const OPERATION_TYPES = {
+    MOVIMENTACAO: 1,
+    CONTAGEM: 2,
+} as const;
 
-export const operationAffectsStock = (typeId: number | null | undefined): boolean => {
-    if (!typeId) return true; // Default to affecting stock
-    const type = OPERATION_TYPES.find(t => t.id === typeId);
-    return type?.affectsStock ?? true;
-};
+// Operation types list for UI iteration
+export const OPERATION_TYPES_LIST = [
+    { id: 1, name: 'Movimentação', affectsStock: true },
+    { id: 2, name: 'Contagem', affectsStock: false },
+];
 
-// Legacy - keeping for compatibility
-export const DEFAULT_CATEGORIES = OPERATION_TYPES;
-export const getCategoryColor = getOperationTypeColor;
-export const getCategoryName = getOperationTypeName;
+// Check if operation affects stock (only Movimentação affects)
+export const operationAffectsStock = (categoryId: number): boolean => {
+    return categoryId === OPERATION_TYPES.MOVIMENTACAO;
+};

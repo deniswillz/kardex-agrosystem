@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Camera, QrCode, X, Save, ArrowLeft, Tag, AlertTriangle, ClipboardList, Loader2 } from 'lucide-react';
 import { Transaction, MovementType } from '../types';
-import { OPERATION_TYPES, operationAffectsStock } from '../constants/categories';
+import { OPERATION_TYPES, OPERATION_TYPES_LIST, operationAffectsStock, WAREHOUSES } from '../constants/categories';
 import { compressImage } from '../services/imageUtils';
 import { useAuth } from './AuthContext';
 
@@ -481,7 +481,7 @@ export const MovementForm: React.FC<MovementFormProps> = ({
               <Tag size={12} /> Tipo de Operação *
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {OPERATION_TYPES.map(op => (
+              {OPERATION_TYPES_LIST.map(op => (
                 <button
                   key={op.id}
                   type="button"
@@ -586,58 +586,89 @@ export const MovementForm: React.FC<MovementFormProps> = ({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                {isContagem ? 'Local da Contagem *' : (type === 'ENTRADA' ? 'Origem *' : 'Destino *')}
-              </label>
-              <input
-                type="text"
-                value={warehouse}
-                onChange={(e) => setWarehouse(e.target.value)}
-                className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                placeholder={isContagem ? 'Almoxarifado A' : (type === 'ENTRADA' ? 'Fornecedor / Fábrica' : 'Linha A / Cliente')}
-                required
-              />
-            </div>
+            {/* Warehouse/Origin - only show for ENTRADA and CONTAGEM */}
+            {type !== 'SAIDA' && (
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                  {isContagem ? 'Local da Contagem *' : 'Origem *'}
+                </label>
+                <input
+                  type="text"
+                  value={warehouse}
+                  onChange={(e) => setWarehouse(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                  placeholder={isContagem ? 'Almoxarifado A' : 'Fornecedor / Fábrica'}
+                  required
+                />
+              </div>
+            )}
             {/* Address Section - De/Para for SAIDA */}
-            {type === 'SAIDA' && addressInventory.length > 0 ? (
-              <div className="grid grid-cols-2 gap-4">
-                {/* DE (From) */}
+            {type === 'SAIDA' ? (
+              <div className="space-y-4">
+                {/* Destino (Warehouse) */}
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                    De (Origem)
+                    Destino (Armazém) *
                   </label>
                   <select
-                    value={address}
-                    onChange={(e) => {
-                      setAddress(e.target.value);
-                      const selected = addressInventory.find(a => a.address === e.target.value);
-                      if (selected) {
-                        setWarehouse(selected.warehouse);
-                      }
-                    }}
+                    value={warehouse}
+                    onChange={(e) => setWarehouse(e.target.value)}
                     className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                    required
                   >
-                    <option value="">Selecione...</option>
-                    {addressInventory.map((addr, idx) => (
-                      <option key={idx} value={addr.address}>
-                        {addr.address} ({addr.balance} un)
+                    <option value="">Selecione o armazém destino...</option>
+                    {WAREHOUSES.map(wh => (
+                      <option key={wh.code} value={wh.code}>
+                        {wh.code} ({wh.name})
                       </option>
                     ))}
                   </select>
                 </div>
-                {/* PARA (To) */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                    Para (Destino)
-                  </label>
-                  <input
-                    type="text"
-                    value={destinationAddress}
-                    onChange={(e) => setDestinationAddress(e.target.value)}
-                    className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                    placeholder="Linha / Cliente / Destino"
-                  />
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* DE (From - Origin Address) */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                      De (Origem)
+                    </label>
+                    {addressInventory.length > 0 ? (
+                      <select
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                      >
+                        <option value="">Selecione...</option>
+                        {addressInventory.map((addr, idx) => (
+                          <option key={idx} value={addr.address}>
+                            [{addr.warehouse}] {addr.address} ({addr.balance} un)
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                        placeholder="Local de origem"
+                      />
+                    )}
+                  </div>
+
+                  {/* PARA (To - Destination Location) */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                      Para (Local)
+                    </label>
+                    <input
+                      type="text"
+                      value={destinationAddress}
+                      onChange={(e) => setDestinationAddress(e.target.value)}
+                      className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                      placeholder="UNICO / Linha / Local"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">Se não registrado, use "UNICO"</p>
+                  </div>
                 </div>
               </div>
             ) : (
