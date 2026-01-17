@@ -262,41 +262,59 @@ export const importInventoryFromExcel = async (file: File): Promise<InventoryImp
 
         console.log("📋 Sheet encontrada:", firstSheetName);
 
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        console.log("📝 Linhas encontradas:", jsonData.length);
+        // Use header: 1 to get raw arrays (by column index instead of header names)
+        const rawData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        console.log("📝 Linhas encontradas:", rawData.length);
 
-        if (jsonData.length > 0) {
-          console.log("🔍 Colunas detectadas:", Object.keys(jsonData[0]));
+        // RIGID column indices based on the report structure:
+        // A=0 (Armazém), D=3 (Produto/code), E=4 (Descrição/name), I=8 (Endereço), N=13 (Unidade), O=14 (Quantidade)
+        const COL_WAREHOUSE = 0;  // A
+        const COL_CODE = 3;       // D
+        const COL_NAME = 4;       // E
+        const COL_ADDRESS = 8;    // I
+        const COL_UNIT = 13;      // N
+        const COL_QUANTITY = 14;  // O
+
+        // Log header row for debugging
+        if (rawData.length > 0) {
+          console.log("🔍 Header (linha 0):", rawData[0]);
+          console.log("🔍 Primeira linha dados (linha 1):", rawData[1]);
         }
 
         let skippedRows = 0;
         let processedRows = 0;
 
-        const items: InventoryImportItem[] = jsonData.map((row: any, index: number) => {
-          // RIGID column mapping using fixed column names from the report:
-          // A = Armazém (Origin), D = Produto (Código), E = Descricao, I = Endereco, N = Unidade, O = Quantidade
-          const warehouse = row['Armazem'] || row['Armazém'] || row['Armazém'] || row['Origem'] || 'Geral';
-          const code = row['Produto'] || row['Código'] || row['Codigo'] || row['Code'] || row['SKU'];
-          const name = row['Descricao'] || row['Descrição'] || row['Item'] || row['Nome'] || row['Produto'];
-          const address = row['Endereco'] || row['Endereço'] || row['Address'] || '';
-          const unit = row['Unidade'] || row['UN'] || row['UM'] || 'UN';
-          const qty = row['Quantidade'] || row['Qtd'] || row['Saldo'] || 0;
+        // Skip first row (header) and process data rows
+        const items: InventoryImportItem[] = rawData.slice(1).map((row: any[], index: number) => {
+          // Skip empty rows
+          if (!row || row.length === 0) {
+            skippedRows++;
+            return null;
+          }
+
+          const warehouse = row[COL_WAREHOUSE] ? String(row[COL_WAREHOUSE]).trim() : 'Geral';
+          const code = row[COL_CODE] ? String(row[COL_CODE]).trim() : '';
+          const name = row[COL_NAME] ? String(row[COL_NAME]).trim() : '';
+          const address = row[COL_ADDRESS] ? String(row[COL_ADDRESS]).trim() : '';
+          const unit = row[COL_UNIT] ? String(row[COL_UNIT]).trim() : 'UN';
+          const qty = row[COL_QUANTITY] ? Math.round(Math.abs(Number(row[COL_QUANTITY]))) : 0;
 
           // Debug log for first few rows
-          if (index < 3) {
-            console.log(`📦 Linha ${index + 1}:`, { code, name, qty, warehouse, address, unit });
+          if (index < 5) {
+            console.log(`📦 Linha ${index + 2}:`, { code, name, qty, warehouse, address, unit });
           }
 
           // Skip invalid rows (must have code AND name)
           if (!code || !name) {
-            console.log(`⚠️ Linha ${index + 1} ignorada: código ou item vazio`, { code, name });
+            if (index < 10) {
+              console.log(`⚠️ Linha ${index + 2} ignorada: código ou item vazio`, { code, name });
+            }
             skippedRows++;
             return null;
           }
 
           // Skip example rows
-          if (String(code).toUpperCase().startsWith('PROD-00')) {
-            console.log(`⚠️ Linha ${index + 1} ignorada: linha de exemplo`);
+          if (code.toUpperCase().startsWith('PROD-00')) {
             skippedRows++;
             return null;
           }
@@ -304,12 +322,12 @@ export const importInventoryFromExcel = async (file: File): Promise<InventoryImp
           processedRows++;
 
           return {
-            code: String(code).toUpperCase().trim(),
-            name: String(name).trim(),
-            quantity: Math.round(Math.abs(Number(qty))) || 0,
-            warehouse: String(warehouse).trim() || 'Geral',
-            address: String(address).trim() || undefined,
-            unit: String(unit).trim() || 'UN',
+            code: code.toUpperCase(),
+            name: name,
+            quantity: qty,
+            warehouse: warehouse || 'Geral',
+            address: address || undefined,
+            unit: unit || 'UN',
             min_stock: undefined
           };
         }).filter((item): item is InventoryImportItem => item !== null);

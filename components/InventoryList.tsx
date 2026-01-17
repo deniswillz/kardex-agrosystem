@@ -22,6 +22,9 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
     const map: Record<string, {
       code: string;
       name: string;
+      warehouse: string;
+      address: string;
+      unit: string;
       entries: number;
       exits: number;
       balance: number;
@@ -36,6 +39,9 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
         map[t.code] = {
           code: t.code,
           name: t.name,
+          warehouse: t.warehouse || 'Geral',
+          address: t.address || '',
+          unit: t.unit || 'UN',
           entries: 0,
           exits: 0,
           balance: 0,
@@ -254,13 +260,16 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
         <table className="w-full">
           <thead className="bg-slate-50 sticky top-0 z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Código/Item</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">Entradas</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">Saídas</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Saldo</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider hidden sm:table-cell">Contagens</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider hidden sm:table-cell">Mínimo</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Ação</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Código/Item</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">Armazém</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">Endereço</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider hidden xl:table-cell">UN</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">Entradas</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">Saídas</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Saldo</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider hidden sm:table-cell">Contagens</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider hidden sm:table-cell">Mínimo</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Ação</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-slate-100">
@@ -268,21 +277,30 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
               const status = getStatusBadge(item);
               return (
                 <tr key={item.code} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center bg-primary-100 text-primary-600">
                         <Package size={20} />
                       </div>
-                      <div className="ml-4">
+                      <div className="ml-3">
                         <div className="text-sm font-bold text-slate-900">{item.name}</div>
                         <div className="text-xs text-slate-500">{item.code}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-emerald-600 hidden md:table-cell">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-700 hidden lg:table-cell">
+                    {item.warehouse || 'Geral'}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell">
+                    {item.address || '-'}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-center text-xs text-slate-500 hidden xl:table-cell">
+                    {item.unit || 'UN'}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-emerald-600 hidden md:table-cell">
                     +{item.entries}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-red-600 hidden md:table-cell">
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-red-600 hidden md:table-cell">
                     -{item.exits}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -356,7 +374,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
             })}
             {filteredInventory.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-6 py-10 text-center text-slate-500">
+                <td colSpan={10} className="px-6 py-10 text-center text-slate-500">
                   Nenhum item encontrado. Registre uma movimentação para começar.
                 </td>
               </tr>
