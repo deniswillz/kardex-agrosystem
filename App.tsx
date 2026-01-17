@@ -447,7 +447,7 @@ function AppContent() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
 
       {/* Migration Modal */}
       {showMigrationModal && (
@@ -492,8 +492,7 @@ function AppContent() {
               <Menu size={20} />
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold">▲</span>
-              <span className="font-semibold text-lg hidden sm:inline">agrosystem</span>
+              <img src="/logo-agrosystem.avif" alt="Agrosystem" className="h-8" />
             </div>
           </div>
 
@@ -517,229 +516,233 @@ function AppContent() {
         </div>
       </header>
 
-      {/* Sidebar Navigation */}
-      <aside className={`fixed md:sticky md:top-0 h-screen w-64 bg-white border-r border-slate-200 z-40 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        <div className="p-6 h-full flex flex-col">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="bg-primary-600 text-white p-2 rounded-xl shadow-lg shadow-primary-500/30">
-              <LayoutDashboard size={24} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Kardex Pro</h1>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className={`w-2 h-2 rounded-full ${syncStatus === 'SYNCED' ? 'bg-emerald-500' :
-                  syncStatus === 'SYNCING' ? 'bg-amber-500 animate-pulse' :
-                    'bg-red-500'
-                  }`}></span>
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                  {syncStatus === 'SYNCED' ? 'Sincronizado' :
-                    syncStatus === 'SYNCING' ? 'Sincronizando...' :
-                      'Offline'}
-                </span>
+      {/* Content Area - Sidebar + Main */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+
+        {/* Sidebar Navigation */}
+        <aside className={`fixed md:relative md:flex-shrink-0 h-[calc(100vh-48px)] w-64 bg-white border-r border-slate-200 z-40 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+          <div className="p-6 h-full flex flex-col">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="bg-primary-600 text-white p-2 rounded-xl shadow-lg shadow-primary-500/30">
+                <LayoutDashboard size={24} />
               </div>
-            </div>
-          </div>
-
-          {/* User Info */}
-          <div className="mb-6 p-3 bg-slate-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600">
-                <User size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-800 truncate">{user.name}</p>
-                <p className="text-xs text-slate-500 truncate">{user.role === 'admin' ? 'Administrador' : 'Operador'}</p>
-              </div>
-            </div>
-          </div>
-
-          <nav className="space-y-1 flex-1">
-            <NavButton id="DASHBOARD" icon={LayoutDashboard} label="Visão Geral" active={view === 'DASHBOARD'} />
-            <NavButton id="INVENTORY" icon={Package} label="Estoque" active={view === 'INVENTORY'} />
-            <NavButton id="STOCK_BALANCE" icon={ClipboardList} label="Saldo em Estoque" active={view === 'STOCK_BALANCE'} />
-            <NavButton id="FORM" icon={Plus} label="Novo Movimento" active={view === 'FORM'} />
-            <NavButton id="HISTORY" icon={List} label="Histórico" active={view === 'HISTORY'} />
-            {user.role === 'admin' && (
-              <NavButton id="SETTINGS" icon={Settings} label="Usuários" active={view === 'SETTINGS'} />
-            )}
-          </nav>
-
-          <div className="mt-4 pt-4 border-t border-slate-100 space-y-2 overflow-y-auto">
-            <h3 className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Backup & Dados</h3>
-            <button
-              onClick={() => exportToExcel(transactions)}
-              className="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium text-sm"
-            >
-              <Download size={16} /> Exportar Excel
-            </button>
-            <button
-              onClick={handleImportClick}
-              className="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium text-sm"
-            >
-              <Upload size={16} /> Importar Excel
-            </button>
-            <button
-              onClick={downloadTemplate}
-              className="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-blue-600 hover:bg-blue-50 transition-all font-medium text-sm"
-            >
-              <Settings size={16} /> Baixar Modelo
-            </button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept=".xlsx, .xls"
-              className="hidden"
-            />
-
-            <div className="pt-4 border-t border-slate-100">
-              <button
-                onClick={signOut}
-                className="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-red-600 hover:bg-red-50 transition-all font-medium text-sm"
-              >
-                <LogOut size={16} /> Sair
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Overlay for mobile menu */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-30 md:hidden backdrop-blur-sm"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Main Content */}
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto h-[calc(100vh-65px)] md:h-screen">
-        {isLoading ? (
-          <div className="h-full flex items-center justify-center">
-            <Loader2 size={40} className="text-primary-600 animate-spin" />
-          </div>
-        ) : (
-          <div className="max-w-7xl mx-auto h-full flex flex-col">
-
-            {/* Header Area */}
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-slate-800">
-                  {view === 'DASHBOARD' && 'Visão Geral'}
-                  {view === 'INVENTORY' && 'Controle de Estoque'}
-                  {view === 'FORM' && (editingTransaction ? 'Editar Registro' : 'Registrar Movimentação')}
-                  {view === 'HISTORY' && 'Histórico Completo'}
-                  {view === 'SETTINGS' && 'Gerenciar Usuários'}
-                </h2>
-                <p className="text-slate-500 text-sm mt-1">
-                  {view === 'INVENTORY' ? 'Lista consolidada de itens e saldos.' :
-                    view === 'SETTINGS' ? 'Adicione e gerencie usuários do sistema.' :
-                      'Gerencie seu estoque de forma simples e eficiente.'}
-                </p>
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight">Kardex Pro</h1>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className={`w-2 h-2 rounded-full ${syncStatus === 'SYNCED' ? 'bg-emerald-500' :
+                    syncStatus === 'SYNCING' ? 'bg-amber-500 animate-pulse' :
+                      'bg-red-500'
+                    }`}></span>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    {syncStatus === 'SYNCED' ? 'Sincronizado' :
+                      syncStatus === 'SYNCING' ? 'Sincronizando...' :
+                        'Offline'}
+                  </span>
+                </div>
               </div>
-
-              {view !== 'FORM' && view !== 'SETTINGS' && (
-                <button
-                  onClick={() => { setEditingTransaction(null); setPresetCode(undefined); setView('FORM'); }}
-                  className="bg-primary-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow-lg shadow-primary-500/30 hover:bg-primary-700 transition-all flex items-center gap-2 active:scale-95"
-                >
-                  <Plus size={18} /> Registrar
-                </button>
-              )}
             </div>
 
-            {/* Views */}
-            {view === 'DASHBOARD' && (
-              <div className="animate-fade-in space-y-6">
-                <StatsCards
-                  stats={stats}
-                  dateFilter={dateFilter}
-                  onFilterChange={setDateFilter}
-                  criticalItemsList={criticalItemsList}
-                />
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2">
-                    <Dashboard transactions={transactions} />
-                  </div>
-                  <div className="lg:col-span-1 h-96">
-                    <div className="bg-primary-900 rounded-xl p-6 text-white h-full relative overflow-hidden flex flex-col justify-center items-center text-center">
-                      <div className="absolute top-0 right-0 p-32 bg-primary-800 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                      <div className="absolute bottom-0 left-0 p-24 bg-emerald-500 rounded-full blur-3xl -ml-10 -mb-10 opacity-20"></div>
+            {/* User Info */}
+            <div className="mb-6 p-3 bg-slate-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600">
+                  <User size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-800 truncate">{user.name}</p>
+                  <p className="text-xs text-slate-500 truncate">{user.role === 'admin' ? 'Administrador' : 'Operador'}</p>
+                </div>
+              </div>
+            </div>
 
-                      <div className="relative z-10">
-                        <div className="bg-white/10 p-4 rounded-full inline-block mb-4 backdrop-blur-sm">
-                          <Package size={32} className="text-emerald-300" />
+            <nav className="space-y-1 flex-1">
+              <NavButton id="DASHBOARD" icon={LayoutDashboard} label="Visão Geral" active={view === 'DASHBOARD'} />
+              <NavButton id="INVENTORY" icon={Package} label="Estoque" active={view === 'INVENTORY'} />
+              <NavButton id="STOCK_BALANCE" icon={ClipboardList} label="Saldo em Estoque" active={view === 'STOCK_BALANCE'} />
+              <NavButton id="FORM" icon={Plus} label="Novo Movimento" active={view === 'FORM'} />
+              <NavButton id="HISTORY" icon={List} label="Histórico" active={view === 'HISTORY'} />
+              {user.role === 'admin' && (
+                <NavButton id="SETTINGS" icon={Settings} label="Usuários" active={view === 'SETTINGS'} />
+              )}
+            </nav>
+
+            <div className="mt-4 pt-4 border-t border-slate-100 space-y-2 overflow-y-auto">
+              <h3 className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Backup & Dados</h3>
+              <button
+                onClick={() => exportToExcel(transactions)}
+                className="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium text-sm"
+              >
+                <Download size={16} /> Exportar Excel
+              </button>
+              <button
+                onClick={handleImportClick}
+                className="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium text-sm"
+              >
+                <Upload size={16} /> Importar Excel
+              </button>
+              <button
+                onClick={downloadTemplate}
+                className="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-blue-600 hover:bg-blue-50 transition-all font-medium text-sm"
+              >
+                <Settings size={16} /> Baixar Modelo
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".xlsx, .xls"
+                className="hidden"
+              />
+
+              <div className="pt-4 border-t border-slate-100">
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-red-600 hover:bg-red-50 transition-all font-medium text-sm"
+                >
+                  <LogOut size={16} /> Sair
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Overlay for mobile menu */}
+        {isMobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/20 z-30 md:hidden backdrop-blur-sm"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto h-[calc(100vh-65px)] md:h-screen">
+          {isLoading ? (
+            <div className="h-full flex items-center justify-center">
+              <Loader2 size={40} className="text-primary-600 animate-spin" />
+            </div>
+          ) : (
+            <div className="max-w-7xl mx-auto h-full flex flex-col">
+
+              {/* Header Area */}
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800">
+                    {view === 'DASHBOARD' && 'Visão Geral'}
+                    {view === 'INVENTORY' && 'Controle de Estoque'}
+                    {view === 'FORM' && (editingTransaction ? 'Editar Registro' : 'Registrar Movimentação')}
+                    {view === 'HISTORY' && 'Histórico Completo'}
+                    {view === 'SETTINGS' && 'Gerenciar Usuários'}
+                  </h2>
+                  <p className="text-slate-500 text-sm mt-1">
+                    {view === 'INVENTORY' ? 'Lista consolidada de itens e saldos.' :
+                      view === 'SETTINGS' ? 'Adicione e gerencie usuários do sistema.' :
+                        'Gerencie seu estoque de forma simples e eficiente.'}
+                  </p>
+                </div>
+
+                {view !== 'FORM' && view !== 'SETTINGS' && (
+                  <button
+                    onClick={() => { setEditingTransaction(null); setPresetCode(undefined); setView('FORM'); }}
+                    className="bg-primary-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow-lg shadow-primary-500/30 hover:bg-primary-700 transition-all flex items-center gap-2 active:scale-95"
+                  >
+                    <Plus size={18} /> Registrar
+                  </button>
+                )}
+              </div>
+
+              {/* Views */}
+              {view === 'DASHBOARD' && (
+                <div className="animate-fade-in space-y-6">
+                  <StatsCards
+                    stats={stats}
+                    dateFilter={dateFilter}
+                    onFilterChange={setDateFilter}
+                    criticalItemsList={criticalItemsList}
+                  />
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2">
+                      <Dashboard transactions={transactions} />
+                    </div>
+                    <div className="lg:col-span-1 h-96">
+                      <div className="bg-primary-900 rounded-xl p-6 text-white h-full relative overflow-hidden flex flex-col justify-center items-center text-center">
+                        <div className="absolute top-0 right-0 p-32 bg-primary-800 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                        <div className="absolute bottom-0 left-0 p-24 bg-emerald-500 rounded-full blur-3xl -ml-10 -mb-10 opacity-20"></div>
+
+                        <div className="relative z-10">
+                          <div className="bg-white/10 p-4 rounded-full inline-block mb-4 backdrop-blur-sm">
+                            <Package size={32} className="text-emerald-300" />
+                          </div>
+                          <h3 className="text-xl font-bold mb-2">Ver Estoque</h3>
+                          <p className="text-primary-100 text-sm mb-6 max-w-[200px] mx-auto">
+                            Consulte a lista de itens, saldos atuais e movimente rapidamente.
+                          </p>
+                          <button
+                            onClick={() => setView('INVENTORY')}
+                            className="bg-white text-primary-900 px-6 py-3 rounded-lg font-bold hover:bg-emerald-50 transition-colors w-full"
+                          >
+                            Ir para Estoque
+                          </button>
                         </div>
-                        <h3 className="text-xl font-bold mb-2">Ver Estoque</h3>
-                        <p className="text-primary-100 text-sm mb-6 max-w-[200px] mx-auto">
-                          Consulte a lista de itens, saldos atuais e movimente rapidamente.
-                        </p>
-                        <button
-                          onClick={() => setView('INVENTORY')}
-                          className="bg-white text-primary-900 px-6 py-3 rounded-lg font-bold hover:bg-emerald-50 transition-colors w-full"
-                        >
-                          Ir para Estoque
-                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {view === 'INVENTORY' && (
-              <div className="flex-1 min-h-0">
-                <InventoryList
-                  transactions={transactions}
-                  onSelectCode={handleSelectInventoryItem}
-                  onImportInventory={handleInventoryImport}
-                  onUpdateMinStock={handleUpdateMinStock}
-                />
-              </div>
-            )}
+              {view === 'INVENTORY' && (
+                <div className="flex-1 min-h-0">
+                  <InventoryList
+                    transactions={transactions}
+                    onSelectCode={handleSelectInventoryItem}
+                    onImportInventory={handleInventoryImport}
+                    onUpdateMinStock={handleUpdateMinStock}
+                  />
+                </div>
+              )}
 
-            {view === 'STOCK_BALANCE' && (
-              <div className="flex-1 min-h-0">
-                <StockBalanceList
-                  transactions={transactions}
-                  onSelectCode={handleSelectInventoryItem}
-                  onUpdateMinStock={handleUpdateMinStock}
-                />
-              </div>
-            )}
+              {view === 'STOCK_BALANCE' && (
+                <div className="flex-1 min-h-0">
+                  <StockBalanceList
+                    transactions={transactions}
+                    onSelectCode={handleSelectInventoryItem}
+                    onUpdateMinStock={handleUpdateMinStock}
+                  />
+                </div>
+              )}
 
-            {view === 'FORM' && (
-              <div className="max-w-2xl mx-auto w-full flex-1">
-                <MovementForm
-                  onAdd={handleAddTransaction}
-                  onUpdate={handleUpdateTransaction}
-                  onCancel={() => { setEditingTransaction(null); setPresetCode(undefined); setView('HISTORY'); }}
-                  transactions={transactions}
-                  initialData={editingTransaction}
-                  presetCode={presetCode}
-                />
-              </div>
-            )}
+              {view === 'FORM' && (
+                <div className="max-w-2xl mx-auto w-full flex-1">
+                  <MovementForm
+                    onAdd={handleAddTransaction}
+                    onUpdate={handleUpdateTransaction}
+                    onCancel={() => { setEditingTransaction(null); setPresetCode(undefined); setView('HISTORY'); }}
+                    transactions={transactions}
+                    initialData={editingTransaction}
+                    presetCode={presetCode}
+                  />
+                </div>
+              )}
 
-            {view === 'HISTORY' && (
-              <div className="flex-1 min-h-0">
-                <TransactionHistory
-                  transactions={transactions}
-                  onDelete={handleDelete}
-                  onEdit={startEditing}
-                />
-              </div>
-            )}
+              {view === 'HISTORY' && (
+                <div className="flex-1 min-h-0">
+                  <TransactionHistory
+                    transactions={transactions}
+                    onDelete={handleDelete}
+                    onEdit={startEditing}
+                  />
+                </div>
+              )}
 
-            {view === 'SETTINGS' && user.role === 'admin' && (
-              <div className="flex-1 min-h-0">
-                <UserManagement />
-              </div>
-            )}
+              {view === 'SETTINGS' && user.role === 'admin' && (
+                <div className="flex-1 min-h-0">
+                  <UserManagement />
+                </div>
+              )}
 
-          </div>
-        )}
-      </main>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
