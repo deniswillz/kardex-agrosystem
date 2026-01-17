@@ -176,7 +176,8 @@ export const importFromExcel = async (file: File): Promise<Transaction[]> => {
             address: String(row['Endereço'] || row['Endereco'] || row['Address'] || row['ENDEREÇO'] || '').trim(),
             responsible: String(row['Responsável'] || row['Responsavel'] || row['Responsible'] || row['RESPONSÁVEL'] || '').trim(),
             photos: [],
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            category_id: 1 // Default to Movimentação (affects stock)
           };
         }).filter((t: any) => t !== null) as Transaction[];
 
