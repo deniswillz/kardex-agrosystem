@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Transaction } from '../types';
 import { Search, Filter, Trash2, MapPin, Calendar, User, Pencil, X, ClipboardList, ArrowUpDown } from 'lucide-react';
-import { OPERATION_TYPES, getOperationTypeName, getOperationTypeColor } from '../constants/categories';
+import { OPERATION_TYPES_LIST, getOperationTypeName, getOperationTypeColor } from '../constants/categories';
 
 interface TransactionHistoryProps {
   transactions: Transaction[];
@@ -72,7 +72,11 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transact
         matchesDateRange = matchesDateRange && t.date <= dateTo;
       }
 
-      return matchesSearch && matchesType && matchesOperationType && matchesResponsible && matchesWarehouse && matchesDateRange;
+      // Show warehouses 01, 20, 22 for ENTRADA, but all warehouses for SAIDA
+      const isAllowedWarehouse = ['01', '20', '22'].some(w => t.warehouse?.includes(w));
+      const showInHistory = isAllowedWarehouse || t.type === 'SAIDA';
+
+      return matchesSearch && matchesType && matchesOperationType && matchesResponsible && matchesWarehouse && matchesDateRange && showInHistory;
     }).sort((a, b) => a.code.localeCompare(b.code));
   }, [transactions, searchTerm, filterType, filterOperationType, filterResponsible, filterWarehouse, dateFrom, dateTo]);
 
@@ -154,7 +158,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transact
                 className="w-full text-xs px-2 py-1.5 bg-white border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="ALL">Todas</option>
-                {OPERATION_TYPES.map(op => (
+                {OPERATION_TYPES_LIST.map(op => (
                   <option key={op.id} value={op.id}>{op.name}</option>
                 ))}
               </select>

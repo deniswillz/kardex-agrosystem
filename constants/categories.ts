@@ -35,3 +35,17 @@ export const operationAffectsStock = (categoryId: number | undefined): boolean =
     // Only category_id === 2 (Contagem) doesn't affect stock
     return !categoryId || categoryId !== OPERATION_TYPES.CONTAGEM;
 };
+
+// Get operation type name
+export const getOperationTypeName = (categoryId: number | undefined): string => {
+    if (!categoryId || categoryId === OPERATION_TYPES.MOVIMENTACAO) return 'Movimentação';
+    if (categoryId === OPERATION_TYPES.CONTAGEM) return 'Contagem';
+    return 'Movimentação';
+};
+
+// Get operation type color
+export const getOperationTypeColor = (categoryId: number | undefined): string => {
+    if (!categoryId || categoryId === OPERATION_TYPES.MOVIMENTACAO) return 'blue';
+    if (categoryId === OPERATION_TYPES.CONTAGEM) return 'purple';
+    return 'blue';
+};
