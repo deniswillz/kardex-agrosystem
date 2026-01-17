@@ -30,6 +30,7 @@ export const MovementForm: React.FC<MovementFormProps> = ({
   const [quantity, setQuantity] = useState<number | ''>('');
   const [warehouse, setWarehouse] = useState('');
   const [address, setAddress] = useState('');
+  const [destinationAddress, setDestinationAddress] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [photos, setPhotos] = useState<string[]>([]);
   const [currentStock, setCurrentStock] = useState<number | null>(null);
@@ -556,18 +557,18 @@ export const MovementForm: React.FC<MovementFormProps> = ({
                 required
               />
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                Endereço {type === 'SAIDA' && addressInventory.length > 0 && '(selecione)'}
-              </label>
-              {/* Show dropdown if SAIDA and has addresses with stock */}
-              {type === 'SAIDA' && addressInventory.length > 0 ? (
-                <div className="space-y-2">
+            {/* Address Section - De/Para for SAIDA */}
+            {type === 'SAIDA' && addressInventory.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4">
+                {/* DE (From) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                    De (Origem)
+                  </label>
                   <select
                     value={address}
                     onChange={(e) => {
                       setAddress(e.target.value);
-                      // Also set warehouse from selected address
                       const selected = addressInventory.find(a => a.address === e.target.value);
                       if (selected) {
                         setWarehouse(selected.warehouse);
@@ -575,36 +576,33 @@ export const MovementForm: React.FC<MovementFormProps> = ({
                     }}
                     className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
                   >
-                    <option value="">Selecione um endereço...</option>
+                    <option value="">Selecione...</option>
                     {addressInventory.map((addr, idx) => (
                       <option key={idx} value={addr.address}>
-                        {addr.address} ({addr.balance} un) - {addr.warehouse}
+                        {addr.address} ({addr.balance} un)
                       </option>
                     ))}
-                    <option value="__NOVO__">+ Outro endereço...</option>
                   </select>
-                  {address === '__NOVO__' && (
-                    <input
-                      type="text"
-                      value=""
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                      placeholder="Digite o endereço"
-                      autoFocus
-                    />
-                  )}
-                  {/* Button to add extra address */}
-                  {!showExtraAddress && (
-                    <button
-                      type="button"
-                      onClick={() => setShowExtraAddress(true)}
-                      className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1"
-                    >
-                      + Adicionar outro endereço
-                    </button>
-                  )}
                 </div>
-              ) : (
+                {/* PARA (To) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                    Para (Destino)
+                  </label>
+                  <input
+                    type="text"
+                    value={destinationAddress}
+                    onChange={(e) => setDestinationAddress(e.target.value)}
+                    className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                    placeholder="Linha / Cliente / Destino"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                  Endereço
+                </label>
                 <input
                   type="text"
                   value={address}
@@ -612,8 +610,8 @@ export const MovementForm: React.FC<MovementFormProps> = ({
                   className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
                   placeholder="Rua 3, Prateleira B"
                 />
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Extra addresses section */}

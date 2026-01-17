@@ -480,18 +480,42 @@ function AppContent() {
         </div>
       )}
 
-      {/* Mobile Header */}
-      <div className="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-30">
-        <div className="flex items-center gap-2">
-          <div className="bg-primary-600 text-white p-1.5 rounded-lg">
-            <LayoutDashboard size={20} />
+      {/* Global Header - Agrosystem Style */}
+      <header className="bg-[#006847] text-white sticky top-0 z-50 shadow-lg">
+        <div className="flex items-center justify-between px-4 py-2">
+          {/* Left - Logo */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 hover:bg-white/10 rounded-lg"
+            >
+              <Menu size={20} />
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold">▲</span>
+              <span className="font-semibold text-lg hidden sm:inline">agrosystem</span>
+            </div>
           </div>
-          <span className="font-bold text-slate-800">Kardex Pro</span>
+
+          {/* Center - Title */}
+          <div className="absolute left-1/2 transform -translate-x-1/2">
+            <h1 className="text-lg font-semibold">Kardex Pro</h1>
+          </div>
+
+          {/* Right - User Info */}
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-3">
+              <span className="text-sm">{user?.name || 'Usuário'}</span>
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                <User size={16} />
+              </div>
+            </div>
+            <div className="hidden lg:block text-right text-xs opacity-80">
+              <div>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+            </div>
+          </div>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 bg-slate-100 rounded-lg">
-          <Menu size={20} className="text-slate-600" />
-        </button>
-      </div>
+      </header>
 
       {/* Sidebar Navigation */}
       <aside className={`fixed md:sticky md:top-0 h-screen w-64 bg-white border-r border-slate-200 z-40 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
