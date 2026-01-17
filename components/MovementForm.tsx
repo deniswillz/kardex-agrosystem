@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Camera, QrCode, X, Save, ArrowLeft, Tag, AlertTriangle, ClipboardList, Loader2 } from 'lucide-react';
 import { Transaction, MovementType } from '../types';
 import { OPERATION_TYPES, operationAffectsStock } from '../constants/categories';
@@ -38,6 +38,8 @@ export const MovementForm: React.FC<MovementFormProps> = ({
   const [categoryId, setCategoryId] = useState<number>(1);
   const [minStock, setMinStock] = useState<number | ''>('');
   const [isUploading, setIsUploading] = useState(false);
+  const [extraAddresses, setExtraAddresses] = useState<{ address: string; quantity: number }[]>([]);
+  const [showExtraAddress, setShowExtraAddress] = useState(false);
 
   // QR Scanner state
   const [isScanning, setIsScanning] = useState(false);
@@ -57,6 +59,33 @@ export const MovementForm: React.FC<MovementFormProps> = ({
     };
     checkMobile();
   }, []);
+
+  // Calculate stock per address for selected code
+  const addressInventory = useMemo(() => {
+    if (!code) return [];
+
+    const addressMap: Record<string, { address: string; warehouse: string; balance: number }> = {};
+
+    transactions
+      .filter(t => t.code.toUpperCase() === code.toUpperCase() && operationAffectsStock(t.category_id))
+      .forEach(t => {
+        const key = `${t.warehouse}|${t.address || 'Sem endereço'}`;
+        if (!addressMap[key]) {
+          addressMap[key] = {
+            address: t.address || 'Sem endereço',
+            warehouse: t.warehouse,
+            balance: 0
+          };
+        }
+        if (t.type === 'ENTRADA') {
+          addressMap[key].balance += t.quantity;
+        } else {
+          addressMap[key].balance -= t.quantity;
+        }
+      });
+
+    return Object.values(addressMap).filter(a => a.balance > 0);
+  }, [code, transactions]);
 
   // Initialize form if editing
   useEffect(() => {
@@ -528,16 +557,125 @@ export const MovementForm: React.FC<MovementFormProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Endereço</label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                placeholder="Rua 3, Prateleira B"
-              />
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                Endereço {type === 'SAIDA' && addressInventory.length > 0 && '(selecione)'}
+              </label>
+              {/* Show dropdown if SAIDA and has addresses with stock */}
+              {type === 'SAIDA' && addressInventory.length > 0 ? (
+                <div className="space-y-2">
+                  <select
+                    value={address}
+                    onChange={(e) => {
+                      setAddress(e.target.value);
+                      // Also set warehouse from selected address
+                      const selected = addressInventory.find(a => a.address === e.target.value);
+                      if (selected) {
+                        setWarehouse(selected.warehouse);
+                      }
+                    }}
+                    className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                  >
+                    <option value="">Selecione um endereço...</option>
+                    {addressInventory.map((addr, idx) => (
+                      <option key={idx} value={addr.address}>
+                        {addr.address} ({addr.balance} un) - {addr.warehouse}
+                      </option>
+                    ))}
+                    <option value="__NOVO__">+ Outro endereço...</option>
+                  </select>
+                  {address === '__NOVO__' && (
+                    <input
+                      type="text"
+                      value=""
+                      onChange={(e) => setAddress(e.target.value)}
+                      className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                      placeholder="Digite o endereço"
+                      autoFocus
+                    />
+                  )}
+                  {/* Button to add extra address */}
+                  {!showExtraAddress && (
+                    <button
+                      type="button"
+                      onClick={() => setShowExtraAddress(true)}
+                      className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1"
+                    >
+                      + Adicionar outro endereço
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                  placeholder="Rua 3, Prateleira B"
+                />
+              )}
             </div>
           </div>
+
+          {/* Extra addresses section */}
+          {showExtraAddress && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-xs font-bold text-amber-700 uppercase">
+                  Endereços Adicionais
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowExtraAddress(false);
+                    setExtraAddresses([]);
+                  }}
+                  className="text-amber-600 hover:text-amber-800"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              {extraAddresses.map((extra, idx) => (
+                <div key={idx} className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={extra.address}
+                    onChange={(e) => {
+                      const updated = [...extraAddresses];
+                      updated[idx].address = e.target.value;
+                      setExtraAddresses(updated);
+                    }}
+                    className="flex-1 bg-white border border-amber-200 text-slate-900 text-sm rounded-lg p-2"
+                    placeholder="Endereço"
+                  />
+                  <input
+                    type="number"
+                    value={extra.quantity}
+                    onChange={(e) => {
+                      const updated = [...extraAddresses];
+                      updated[idx].quantity = Number(e.target.value) || 0;
+                      setExtraAddresses(updated);
+                    }}
+                    className="w-20 bg-white border border-amber-200 text-slate-900 text-sm rounded-lg p-2"
+                    placeholder="Qtd"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setExtraAddresses(extraAddresses.filter((_, i) => i !== idx))}
+                    className="text-red-500 hover:text-red-700 p-2"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setExtraAddresses([...extraAddresses, { address: '', quantity: 0 }])}
+                className="text-xs text-amber-700 hover:text-amber-900 flex items-center gap-1"
+              >
+                + Adicionar endereço
+              </button>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             {/* Responsible - LOCKED */}
