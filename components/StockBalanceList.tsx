@@ -32,8 +32,9 @@ export const StockBalanceList: React.FC<StockBalanceListProps> = ({
             min_stock: number;
         }> = {};
 
-        // Filter only stock-affecting operations (no warehouse restriction in Saldo em Estoque)
+        // Filter only allowed warehouses (01, 20, 22) and stock-affecting operations
         const filteredTx = transactions.filter(t =>
+            ['01', '20', '22'].some(w => t.warehouse?.includes(w)) &&
             operationAffectsStock(t.category_id)
         );
 
