@@ -15,6 +15,7 @@ export interface Transaction {
   category_id?: number; // Category reference
   min_stock?: number; // Minimum stock for alerts
   user_id?: string; // User who created the transaction
+  unit?: string; // Unit of measure (UN, KG, etc.)
 }
 
 export interface StockSummary {

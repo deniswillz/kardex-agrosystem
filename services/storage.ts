@@ -105,7 +105,8 @@ export const saveTransaction = async (
         responsible: transaction.responsible || null,
         category_id: transaction.category_id || null,
         photos: transaction.photos || [],
-        user_id: userId || null
+        user_id: userId || null,
+        min_stock: transaction.min_stock || null
       })
       .select()
       .single();

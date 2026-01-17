@@ -10,6 +10,7 @@ export interface InventoryImportItem {
   warehouse: string;
   address?: string;
   min_stock?: number;
+  unit?: string; // Unidade de medida
 }
 
 export const downloadTemplate = () => {
@@ -272,17 +273,18 @@ export const importInventoryFromExcel = async (file: File): Promise<InventoryImp
         let processedRows = 0;
 
         const items: InventoryImportItem[] = jsonData.map((row: any, index: number) => {
-          // Flexible field mapping
-          const code = row['Código'] || row['Codigo'] || row['Code'] || row['SKU'] || row['CÓDIGO'] || row['CODIGO'];
-          const name = row['Item'] || row['Nome'] || row['Descrição'] || row['Description'] || row['Name'] || row['ITEM'] || row['NOME'] || row['Produto'] || row['PRODUTO'];
-          const qty = row['Quantidade'] || row['Qtd'] || row['Quantity'] || row['Quant'] || row['QUANTIDADE'] || row['QTD'] || row['Saldo'] || row['SALDO'] || 0;
-          const warehouse = row['Armazém'] || row['Armazem'] || row['Warehouse'] || row['Local'] || row['ARMAZÉM'] || row['ARMAZEM'] || 'Geral';
-          const address = row['Endereço'] || row['Endereco'] || row['Address'] || row['ENDEREÇO'] || row['Localização'] || '';
-          const minStock = row['Estoque Mínimo'] || row['Estoque Minimo'] || row['Min Stock'] || row['Min'] || row['ESTOQUE MÍNIMO'] || row['Mínimo'] || 0;
+          // RIGID column mapping using fixed column names from the report:
+          // A = Armazém (Origin), D = Produto (Código), E = Descricao, I = Endereco, N = Unidade, O = Quantidade
+          const warehouse = row['Armazem'] || row['Armazém'] || row['Armazém'] || row['Origem'] || 'Geral';
+          const code = row['Produto'] || row['Código'] || row['Codigo'] || row['Code'] || row['SKU'];
+          const name = row['Descricao'] || row['Descrição'] || row['Item'] || row['Nome'] || row['Produto'];
+          const address = row['Endereco'] || row['Endereço'] || row['Address'] || '';
+          const unit = row['Unidade'] || row['UN'] || row['UM'] || 'UN';
+          const qty = row['Quantidade'] || row['Qtd'] || row['Saldo'] || 0;
 
           // Debug log for first few rows
           if (index < 3) {
-            console.log(`📦 Linha ${index + 1}:`, { code, name, qty, warehouse, address, minStock });
+            console.log(`📦 Linha ${index + 1}:`, { code, name, qty, warehouse, address, unit });
           }
 
           // Skip invalid rows (must have code AND name)
@@ -307,7 +309,8 @@ export const importInventoryFromExcel = async (file: File): Promise<InventoryImp
             quantity: Math.round(Math.abs(Number(qty))) || 0,
             warehouse: String(warehouse).trim() || 'Geral',
             address: String(address).trim() || undefined,
-            min_stock: Math.abs(Number(minStock)) || undefined
+            unit: String(unit).trim() || 'UN',
+            min_stock: undefined
           };
         }).filter((item): item is InventoryImportItem => item !== null);
 
