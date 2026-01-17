@@ -602,76 +602,8 @@ export const MovementForm: React.FC<MovementFormProps> = ({
                 />
               </div>
             )}
-            {/* Address Section - De/Para for SAIDA */}
-            {type === 'SAIDA' ? (
-              <div className="space-y-4">
-                {/* Destino (Warehouse) */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                    Destino (Armazém) *
-                  </label>
-                  <select
-                    value={warehouse}
-                    onChange={(e) => setWarehouse(e.target.value)}
-                    className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                    required
-                  >
-                    <option value="">Selecione o armazém destino...</option>
-                    {WAREHOUSES.map(wh => (
-                      <option key={wh.code} value={wh.code}>
-                        {wh.code} ({wh.name})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {/* DE (From - Origin Address) */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                      De (Origem)
-                    </label>
-                    {addressInventory.length > 0 ? (
-                      <select
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                      >
-                        <option value="">Selecione...</option>
-                        {addressInventory.map((addr, idx) => (
-                          <option key={idx} value={addr.address}>
-                            [{addr.warehouse}] {addr.address} ({addr.balance} un)
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                        placeholder="Local de origem"
-                      />
-                    )}
-                  </div>
-
-                  {/* PARA (To - Destination Location) */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                      Para (Local)
-                    </label>
-                    <input
-                      type="text"
-                      value={destinationAddress}
-                      onChange={(e) => setDestinationAddress(e.target.value)}
-                      className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                      placeholder="UNICO / Linha / Local"
-                    />
-                    <p className="text-[10px] text-slate-400 mt-1">Se não registrado, use "UNICO"</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
+            {/* Endereço - show for ENTRADA and CONTAGEM */}
+            {type !== 'SAIDA' && (
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                   Endereço
@@ -686,6 +618,78 @@ export const MovementForm: React.FC<MovementFormProps> = ({
               </div>
             )}
           </div>
+
+          {/* SAIDA Layout - Full width section below date */}
+          {type === 'SAIDA' && (
+            <div className="space-y-4 bg-slate-50 rounded-lg p-4 border border-slate-200">
+              {/* Destino (Warehouse) */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                  Destino (Armazém) *
+                </label>
+                <select
+                  value={warehouse}
+                  onChange={(e) => setWarehouse(e.target.value)}
+                  className="bg-white border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                  required
+                >
+                  <option value="">Selecione o armazém destino...</option>
+                  {WAREHOUSES.map(wh => (
+                    <option key={wh.code} value={wh.code}>
+                      {wh.code} ({wh.name})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* De / Para - Grid lado a lado */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* DE (From - Origin Address) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                    De (Origem)
+                  </label>
+                  {addressInventory.length > 0 ? (
+                    <select
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      className="bg-white border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                    >
+                      <option value="">Selecione...</option>
+                      {addressInventory.map((addr, idx) => (
+                        <option key={idx} value={addr.address}>
+                          [{addr.warehouse}] {addr.address} ({addr.balance} un)
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      className="bg-white border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                      placeholder="Local de origem"
+                    />
+                  )}
+                </div>
+
+                {/* PARA (To - Destination Location) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                    Para (Local)
+                  </label>
+                  <input
+                    type="text"
+                    value={destinationAddress}
+                    onChange={(e) => setDestinationAddress(e.target.value)}
+                    className="bg-white border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                    placeholder="UNICO / Linha / Local"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">Se não registrado, use "UNICO"</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Extra addresses section */}
           {showExtraAddress && (
