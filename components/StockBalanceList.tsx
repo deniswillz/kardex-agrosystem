@@ -66,12 +66,18 @@ export const StockBalanceList: React.FC<StockBalanceListProps> = ({
             }
         });
 
-        return Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
+        // Only show locations with positive balance (hide zeroed locations)
+        return Object.values(map)
+            .filter(a => a.balance > 0)
+            .sort((a, b) => a.name.localeCompare(b.name));
     }, [transactions]);
 
     // Filter by search and status
     const filteredStock = useMemo(() => {
         return stockByAddress.filter(item => {
+            // Always hide zero balance (already filtered above, but double-check)
+            if (item.balance <= 0) return false;
+
             const matchesSearch =
                 item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

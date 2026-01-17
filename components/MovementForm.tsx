@@ -271,24 +271,65 @@ export const MovementForm: React.FC<MovementFormProps> = ({
       }
     }
 
-    const formData: Omit<Transaction, 'id' | 'timestamp'> = {
-      date,
-      code: code.toUpperCase(),
-      name,
-      type: isContagem ? 'ENTRADA' : type, // Contagem always uses ENTRADA but doesn't affect stock
-      quantity: Number(quantity),
-      warehouse,
-      address,
-      responsible: user?.name || '', // Always use logged user, not editable
-      photos,
-      category_id: categoryId,
-      min_stock: minStock ? Number(minStock) : undefined
-    };
+    // Check if this is an internal transfer (SAIDA with destination address in same warehouse)
+    const isInternalTransfer = type === 'SAIDA' && destinationAddress && destinationAddress.trim() !== '';
 
-    if (initialData && onUpdate) {
-      onUpdate(initialData.id, formData);
+    if (isInternalTransfer && !isContagem) {
+      // Create TWO transactions for internal transfer:
+      // 1. SAIDA from origin address
+      const saidaData: Omit<Transaction, 'id' | 'timestamp'> = {
+        date,
+        code: code.toUpperCase(),
+        name,
+        type: 'SAIDA',
+        quantity: Number(quantity),
+        warehouse,
+        address, // Origin address (De)
+        responsible: user?.name || '',
+        photos,
+        category_id: categoryId,
+        min_stock: minStock ? Number(minStock) : undefined
+      };
+
+      // 2. ENTRADA at destination address (same warehouse, different address)
+      const entradaData: Omit<Transaction, 'id' | 'timestamp'> = {
+        date,
+        code: code.toUpperCase(),
+        name,
+        type: 'ENTRADA',
+        quantity: Number(quantity),
+        warehouse, // Same warehouse
+        address: destinationAddress, // Destination address (Para)
+        responsible: user?.name || '',
+        photos: [], // No photos for the paired entry
+        category_id: categoryId,
+        min_stock: minStock ? Number(minStock) : undefined
+      };
+
+      // Add both transactions
+      onAdd(saidaData);
+      onAdd(entradaData);
     } else {
-      onAdd(formData);
+      // Normal single transaction
+      const formData: Omit<Transaction, 'id' | 'timestamp'> = {
+        date,
+        code: code.toUpperCase(),
+        name,
+        type: isContagem ? 'ENTRADA' : type,
+        quantity: Number(quantity),
+        warehouse,
+        address,
+        responsible: user?.name || '',
+        photos,
+        category_id: categoryId,
+        min_stock: minStock ? Number(minStock) : undefined
+      };
+
+      if (initialData && onUpdate) {
+        onUpdate(initialData.id, formData);
+      } else {
+        onAdd(formData);
+      }
     }
 
     // Reset if adding new
@@ -299,6 +340,7 @@ export const MovementForm: React.FC<MovementFormProps> = ({
       setCurrentStock(null);
       setName('');
       setMinStock('');
+      setDestinationAddress('');
     }
   };
 
