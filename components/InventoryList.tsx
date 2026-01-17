@@ -93,7 +93,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
       }
     });
 
-    return Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
+    return Object.values(map).sort((a, b) => a.code.localeCompare(b.code));
   }, [transactions]);
 
   // Calculate critical items count

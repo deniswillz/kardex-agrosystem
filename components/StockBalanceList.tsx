@@ -32,9 +32,8 @@ export const StockBalanceList: React.FC<StockBalanceListProps> = ({
             min_stock: number;
         }> = {};
 
-        // Filter only allowed warehouses and stock-affecting operations
+        // Filter only stock-affecting operations (no warehouse restriction in Saldo em Estoque)
         const filteredTx = transactions.filter(t =>
-            ALLOWED_WAREHOUSES.some(w => t.warehouse.includes(w)) &&
             operationAffectsStock(t.category_id)
         );
 
@@ -66,17 +65,14 @@ export const StockBalanceList: React.FC<StockBalanceListProps> = ({
             }
         });
 
-        // Only show locations with positive balance (hide zeroed locations)
+        // Show all locations (including zero balance for visibility)
         return Object.values(map)
-            .filter(a => a.balance > 0)
-            .sort((a, b) => a.name.localeCompare(b.name));
+            .sort((a, b) => a.code.localeCompare(b.code));
     }, [transactions]);
 
     // Filter by search and status
     const filteredStock = useMemo(() => {
         return stockByAddress.filter(item => {
-            // Always hide zero balance (already filtered above, but double-check)
-            if (item.balance <= 0) return false;
 
             const matchesSearch =
                 item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -3,7 +3,9 @@ export const WAREHOUSES = [
     { code: '01', name: 'Chicote' },
     { code: '02', name: 'Entrada' },
     { code: '03', name: 'Importado' },
-    { code: '04', name: 'Chicote / Mecânica / Eletrônica' },
+    { code: '04 Chicote', name: 'Chicote (04)' },
+    { code: '04 Mecanica', name: 'Mecânica (04)' },
+    { code: '04 Eletronica', name: 'Eletrônica (04)' },
     { code: '08', name: 'P&D' },
     { code: '11', name: 'Filial' },
     { code: '19', name: 'Qualidade' },
@@ -27,7 +29,9 @@ export const OPERATION_TYPES_LIST = [
     { id: 2, name: 'Contagem', affectsStock: false },
 ];
 
-// Check if operation affects stock (only Movimentação affects)
-export const operationAffectsStock = (categoryId: number): boolean => {
-    return categoryId === OPERATION_TYPES.MOVIMENTACAO;
+// Check if operation affects stock (only Contagem doesn't affect)
+export const operationAffectsStock = (categoryId: number | undefined): boolean => {
+    // If no category_id or category_id is 1 (Movimentação), it affects stock
+    // Only category_id === 2 (Contagem) doesn't affect stock
+    return !categoryId || categoryId !== OPERATION_TYPES.CONTAGEM;
 };
