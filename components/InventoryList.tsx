@@ -17,13 +17,15 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
   const [importResult, setImportResult] = useState<{ count: number; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Only show these warehouses
+  const ALLOWED_WAREHOUSES = ['01', '20', '22'];
+
   // Aggregate items with min_stock info
   const inventory = useMemo(() => {
     const map: Record<string, {
       code: string;
       name: string;
       warehouse: string;
-      address: string;
       unit: string;
       entries: number;
       exits: number;
@@ -34,13 +36,17 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
       lastContagem?: { quantity: number; date: string; timestamp?: number };
     }> = {};
 
-    transactions.forEach(t => {
+    // Filter only allowed warehouses
+    const filteredTx = transactions.filter(t =>
+      ALLOWED_WAREHOUSES.some(w => t.warehouse.includes(w))
+    );
+
+    filteredTx.forEach(t => {
       if (!map[t.code]) {
         map[t.code] = {
           code: t.code,
           name: t.name,
           warehouse: t.warehouse || 'Geral',
-          address: t.address || '',
           unit: t.unit || 'UN',
           entries: 0,
           exits: 0,
@@ -262,7 +268,6 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Código/Item</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">Armazém</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">Endereço</th>
               <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider hidden xl:table-cell">UN</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">Entradas</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">Saídas</th>
@@ -290,9 +295,6 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-700 hidden lg:table-cell">
                     {item.warehouse || 'Geral'}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell">
-                    {item.address || '-'}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-center text-xs text-slate-500 hidden xl:table-cell">
                     {item.unit || 'UN'}
@@ -374,8 +376,8 @@ export const InventoryList: React.FC<InventoryListProps> = ({ transactions, onSe
             })}
             {filteredInventory.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-6 py-10 text-center text-slate-500">
-                  Nenhum item encontrado. Registre uma movimentação para começar.
+                <td colSpan={9} className="px-6 py-10 text-center text-slate-500">
+                  Nenhum item encontrado nos armazéns 01, 20 ou 22.
                 </td>
               </tr>
             )}

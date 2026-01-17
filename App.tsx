@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { LayoutDashboard, List, Settings, Download, Menu, Plus, Upload, Package, LogOut, User, Cloud, Loader2 } from 'lucide-react';
+import { LayoutDashboard, List, Settings, Download, Menu, Plus, Upload, Package, LogOut, User, Cloud, Loader2, ClipboardList } from 'lucide-react';
 import { Transaction, DashboardStats } from './types';
 import {
   loadTransactions,
@@ -20,6 +20,7 @@ import { Dashboard } from './components/Dashboard';
 import { MovementForm } from './components/MovementForm';
 import { TransactionHistory } from './components/TransactionHistory';
 import { InventoryList } from './components/InventoryList';
+import { StockBalanceList } from './components/StockBalanceList';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import { LoginScreen } from './components/LoginScreen';
 import { UserManagement } from './components/UserManagement';
@@ -28,7 +29,7 @@ function AppContent() {
   const { user, loading: authLoading, signOut } = useAuth();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [view, setView] = useState<'DASHBOARD' | 'HISTORY' | 'FORM' | 'INVENTORY' | 'SETTINGS'>('DASHBOARD');
+  const [view, setView] = useState<'DASHBOARD' | 'HISTORY' | 'FORM' | 'INVENTORY' | 'STOCK_BALANCE' | 'SETTINGS'>('DASHBOARD');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'SYNCED' | 'SYNCING' | 'OFFLINE'>('SYNCED');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -530,7 +531,8 @@ function AppContent() {
 
           <nav className="space-y-1 flex-1">
             <NavButton id="DASHBOARD" icon={LayoutDashboard} label="Visão Geral" active={view === 'DASHBOARD'} />
-            <NavButton id="INVENTORY" icon={Package} label="Estoque (Lista)" active={view === 'INVENTORY'} />
+            <NavButton id="INVENTORY" icon={Package} label="Estoque" active={view === 'INVENTORY'} />
+            <NavButton id="STOCK_BALANCE" icon={ClipboardList} label="Saldo em Estoque" active={view === 'STOCK_BALANCE'} />
             <NavButton id="FORM" icon={Plus} label="Novo Movimento" active={view === 'FORM'} />
             <NavButton id="HISTORY" icon={List} label="Histórico" active={view === 'HISTORY'} />
             {user.role === 'admin' && (
@@ -667,6 +669,16 @@ function AppContent() {
                   transactions={transactions}
                   onSelectCode={handleSelectInventoryItem}
                   onImportInventory={handleInventoryImport}
+                  onUpdateMinStock={handleUpdateMinStock}
+                />
+              </div>
+            )}
+
+            {view === 'STOCK_BALANCE' && (
+              <div className="flex-1 min-h-0">
+                <StockBalanceList
+                  transactions={transactions}
+                  onSelectCode={handleSelectInventoryItem}
                   onUpdateMinStock={handleUpdateMinStock}
                 />
               </div>
